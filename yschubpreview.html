@@ -1,0 +1,850 @@
+<title>YSC Hub Preview</title>
+<style>
+  /* ──────────────────────────────────────────────────────────────────────
+     Deliberately single visual world: a Homestead/Miami performance-campus
+     palette lifted from sperformancehub.com (deep navy + acid lime + warm
+     sand paper). This is a controlled pitch asset shown on known hardware,
+     so it commits to one look rather than adapting to viewer theme — colors
+     are painted explicitly throughout, no prefers-color-scheme branching.
+  ───────────────────────────────────────────────────────────────────────*/
+  @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;700;800;900&family=Public+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+  :root{
+    --navy-deep:#16203D; --navy:#23315F; --navy-soft:#31427A; --navy-line:#3B4C86;
+    --lime:#C7D22B; --lime-dim:#9AA61F; --lime-ink:#1B230A;
+    --paper:#F6F4EC; --paper-dim:#ECE7D6; --paper-card:#FFFDF7;
+    --ink:#16203D; --ink-soft:#525C79; --ink-faint:#8891A8;
+    --line:#DED8C2;
+    --good:#1E8F6F; --good-bg:#E1F1E9; --good-line:#BEE0CE;
+    --warn:#D8862E; --warn-bg:#FBEEDC; --warn-line:#F0CE9C;
+    --danger:#C24B3F; --danger-bg:#F7E3E0; --danger-line:#E7B7AF;
+    --font-display:'Archivo',"Arial Black",sans-serif;
+    --font-body:'Public Sans',-apple-system,BlinkMacSystemFont,sans-serif;
+    --font-mono:'Space Mono',ui-monospace,Menlo,monospace;
+  }
+
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;}
+  h1,h2,h3{font-family:var(--font-display);margin:0;text-wrap:balance;}
+  p{margin:0;}
+  button{font-family:inherit;cursor:pointer;}
+  ::selection{background:var(--lime);color:var(--lime-ink);}
+
+  .eyebrow{font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:.14em;
+    text-transform:uppercase;}
+
+  /* ── App shell ─────────────────────────────────────────────────────── */
+  #app{min-height:100vh;display:flex;flex-direction:column;}
+
+  .topbar{background:var(--navy-deep);color:#fff;position:sticky;top:0;z-index:40;
+    box-shadow:0 1px 0 var(--navy-line);}
+  .topbar-inner{max-width:1400px;margin:0 auto;padding:0 22px;height:68px;
+    display:flex;align-items:center;gap:24px;}
+  .brand{display:flex;align-items:center;gap:11px;flex-shrink:0;}
+  .brand-mark{width:34px;height:34px;border-radius:50%;background:conic-gradient(from 210deg,var(--lime),var(--navy-soft) 55%,var(--lime));
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .brand-mark span{width:16px;height:16px;border-radius:50%;background:var(--navy-deep);}
+  .brand-word{line-height:1.05;}
+  .brand-word b{display:block;font-family:var(--font-display);font-weight:900;font-size:16.5px;
+    letter-spacing:.01em;}
+  .brand-word small{display:block;font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;
+    color:var(--lime);text-transform:uppercase;margin-top:1px;}
+
+  .role-switch{display:flex;gap:6px;background:rgba(255,255,255,.06);border:1px solid var(--navy-line);
+    border-radius:999px;padding:4px;margin-left:auto;}
+  .role-btn{border:none;background:transparent;color:#B9C1DC;font-family:var(--font-mono);
+    font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    padding:8px 18px;border-radius:999px;transition:background .15s,color .15s;position:relative;}
+  .role-btn.active{background:var(--lime);color:var(--lime-ink);}
+  .role-btn:not(.active):hover{color:#fff;}
+
+  .demo-tag{display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:10.5px;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--navy-deep);background:var(--lime);
+    border-radius:6px;padding:7px 11px;flex-shrink:0;}
+  .demo-tag i{width:6px;height:6px;border-radius:50%;background:var(--danger);flex-shrink:0;
+    box-shadow:0 0 0 3px rgba(194,75,63,.25);}
+
+  /* the one recurring "brand handshake" — an angled lime band, echoing the
+     diagonal motif from the SPH site — marks whichever role is live */
+  .angle-band{height:5px;background:var(--lime);transform:skewY(-.6deg);transform-origin:left;
+    box-shadow:0 1px 0 rgba(0,0,0,.08);}
+
+  main{flex:1;max-width:1400px;margin:0 auto;padding:26px 22px 60px;width:100%;}
+
+  .view{display:none;}
+  .view.active{display:block;}
+
+  .view-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;
+    margin-bottom:20px;flex-wrap:wrap;}
+  .view-head h1{font-size:30px;font-weight:900;color:var(--navy-deep);letter-spacing:-.01em;}
+  .view-head .eyebrow{color:var(--lime-dim);margin-bottom:6px;display:block;}
+  .view-sub{font-size:14px;color:var(--ink-soft);max-width:520px;line-height:1.5;}
+
+  .hub-tabs{display:flex;gap:4px;border-bottom:2px solid var(--line);margin-bottom:22px;
+    overflow-x:auto;}
+  .hub-tab{border:none;background:none;font-family:var(--font-mono);font-size:12px;font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);padding:11px 16px 13px;
+    border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:color .15s;}
+  .hub-tab.active{color:var(--navy-deep);border-color:var(--lime);}
+  .hub-tab:not(.active):hover{color:var(--ink-soft);}
+
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;animation:rise .35s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  @media (prefers-reduced-motion:reduce){.tab-panel.active{animation:none;}}
+
+  /* ── generic pieces ───────────────────────────────────────────────── */
+  .grid{display:grid;gap:16px;}
+  .g-2{grid-template-columns:1.3fr .9fr;}
+  .g-3{grid-template-columns:repeat(3,1fr);}
+  .g-4{grid-template-columns:repeat(4,1fr);}
+  @media (max-width:920px){.g-2,.g-3,.g-4{grid-template-columns:1fr;}}
+
+  .card{background:var(--paper-card);border:1px solid var(--line);border-radius:12px;padding:20px;}
+  .card-dark{background:var(--navy);color:#fff;border:1px solid var(--navy-line);border-radius:12px;padding:20px;}
+  .card h3{font-size:15px;font-weight:800;color:var(--navy-deep);}
+  .card-dark h3{color:#fff;}
+  .card-label{font-family:var(--font-mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--lime-dim);margin-bottom:8px;display:block;}
+  .card-dark .card-label{color:var(--lime);}
+
+  .pill{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:10.5px;
+    font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:4px 10px;border-radius:999px;}
+  .pill-good{background:var(--good-bg);color:var(--good);border:1px solid var(--good-line);}
+  .pill-warn{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-line);}
+  .pill-danger{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-line);}
+  .pill-neutral{background:var(--paper-dim);color:var(--ink-soft);border:1px solid var(--line);}
+  .pill i{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+
+  .btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:9px;padding:11px 18px;
+    font-family:var(--font-body);font-size:13.5px;font-weight:700;}
+  .btn-lime{background:var(--lime);color:var(--lime-ink);}
+  .btn-lime:hover{background:#d3de3f;}
+  .btn-outline{background:transparent;border:1.5px solid var(--navy-line);color:var(--navy-deep);}
+  .btn-outline-dark{background:transparent;border:1.5px solid rgba(255,255,255,.35);color:#fff;}
+  .btn-ghost{background:none;border:1.5px solid var(--line);color:var(--ink-soft);}
+  .btn-ghost:hover{border-color:var(--navy-line);color:var(--navy-deep);}
+
+  .avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-display);font-weight:800;font-size:13px;color:#fff;flex-shrink:0;}
+
+  /* ── STUDENT — Home / chat ───────────────────────────────────────── */
+  .chat-shell{background:var(--navy-deep);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;
+    min-height:460px;}
+  .chat-topbar{padding:12px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--navy-line);}
+  .chip-mentor{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.06);
+    border:1px solid var(--navy-line);border-radius:999px;padding:6px 13px;font-family:var(--font-mono);
+    font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:#DCE1F2;}
+  .chip-mentor i{width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 0 3px rgba(30,143,111,.3);}
+  .chat-log{flex:1;padding:22px 24px;display:flex;flex-direction:column;gap:14px;}
+  .msg{display:flex;gap:11px;max-width:78%;}
+  .msg.user{align-self:flex-end;flex-direction:row-reverse;max-width:70%;}
+  .msg .av{width:30px;height:30px;border-radius:50%;background:var(--lime);color:var(--lime-ink);
+    display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:900;
+    font-size:12px;flex-shrink:0;}
+  .msg.user .av{background:var(--navy-soft);color:#fff;}
+  .bubble{background:#fff;color:var(--ink);border-radius:12px 12px 12px 3px;padding:13px 16px;
+    font-size:14.5px;line-height:1.55;}
+  .msg.user .bubble{background:var(--navy-soft);color:#fff;border-radius:12px 12px 3px 12px;}
+  .focus-card{background:rgba(199,210,43,.1);border:1px solid rgba(199,210,43,.35);border-radius:10px;
+    padding:12px 15px;max-width:340px;margin-left:41px;}
+  .focus-card .fc-eyebrow{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--lime);margin-bottom:4px;display:block;}
+  .focus-card b{color:#fff;font-size:13.5px;}
+  .focus-card .fc-meta{color:#AEB7D1;font-size:11.5px;margin-top:3px;}
+  .focus-btn{margin-left:41px;margin-top:2px;}
+  .typing{margin-left:41px;display:flex;gap:4px;padding:12px 0;}
+  .typing span{width:6px;height:6px;border-radius:50%;background:#6C7899;animation:blink 1.1s infinite ease-in-out;}
+  .typing span:nth-child(2){animation-delay:.15s;} .typing span:nth-child(3){animation-delay:.3s;}
+  @keyframes blink{0%,80%,100%{opacity:.25;}40%{opacity:1;}}
+  .chips-row{padding:0 24px 20px;display:flex;flex-wrap:wrap;gap:8px;}
+  .sugg-chip{border:1.5px solid var(--navy-line);background:transparent;color:#DCE1F2;border-radius:999px;
+    padding:9px 15px;font-size:12.5px;font-family:var(--font-body);font-weight:600;transition:all .15s;}
+  .sugg-chip:hover{border-color:var(--lime);color:#fff;}
+  .sugg-chip[disabled]{opacity:.3;pointer-events:none;}
+
+  /* ── STUDENT — Today ─────────────────────────────────────────────── */
+  .mentor-msg{background:var(--paper-dim);border-left:4px solid var(--lime);border-radius:0 10px 10px 0;
+    padding:14px 18px;}
+  .mentor-msg .from{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink-faint);margin-bottom:6px;}
+  .mentor-msg p{font-size:14px;line-height:1.55;color:var(--ink);}
+
+  .plan-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);}
+  .plan-row:last-child{border-bottom:none;}
+  .plan-check{width:19px;height:19px;border-radius:5px;border:2px solid var(--line);flex-shrink:0;}
+  .plan-txt{flex:1;font-size:13.5px;font-weight:600;color:var(--navy-deep);}
+  .plan-sub{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint);}
+  .plan-tag{font-family:var(--font-mono);font-size:9.5px;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;padding:3px 8px;border-radius:5px;white-space:nowrap;}
+
+  .week-bars{display:flex;align-items:flex-end;gap:10px;height:120px;padding-top:8px;}
+  .week-bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;
+    justify-content:flex-end;}
+  .week-bar{width:100%;border-radius:4px 4px 0 0;background:var(--paper-dim);position:relative;
+    display:flex;align-items:flex-end;justify-content:center;}
+  .week-bar.today{background:var(--lime);}
+  .week-bar.travel{background:repeating-linear-gradient(135deg,var(--warn-bg),var(--warn-bg) 4px,#fff 4px,#fff 8px);
+    border:1.5px dashed var(--warn);}
+  .week-bar-n{font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--navy-deep);
+    margin-bottom:5px;}
+  .week-bar.today .week-bar-n{color:var(--lime-ink);}
+  .week-day{font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;color:var(--ink-faint);}
+
+  .sched-row{display:flex;gap:13px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);}
+  .sched-row:last-child{border-bottom:none;}
+  .sched-day{font-family:var(--font-mono);font-size:10.5px;font-weight:700;color:var(--lime-dim);
+    width:38px;flex-shrink:0;padding-top:1px;}
+  .sched-what b{display:block;font-size:13.5px;color:var(--navy-deep);}
+  .sched-what span{font-size:12px;color:var(--ink-soft);}
+
+  /* ── STUDENT — Growth ────────────────────────────────────────────── */
+  .goal-card{border:1px solid var(--line);border-radius:10px;padding:16px 18px;background:var(--paper-card);}
+  .goal-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px;}
+  .goal-top b{font-size:14.5px;color:var(--navy-deep);}
+  .bar-track{height:7px;background:var(--paper-dim);border-radius:99px;overflow:hidden;margin-top:10px;}
+  .bar-fill{height:100%;background:var(--lime);border-radius:99px;}
+  .goal-meta{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint);margin-top:7px;}
+
+  /* ── People ──────────────────────────────────────────────────────── */
+  .person-row{display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line);}
+  .person-row:last-child{border-bottom:none;}
+  .person-name{font-size:14px;font-weight:700;color:var(--navy-deep);}
+  .person-role{font-size:12px;color:var(--ink-soft);}
+  .person-actions{margin-left:auto;display:flex;gap:8px;}
+
+  /* ── TEACHER — Student Monitor ───────────────────────────────────── */
+  .roster-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;}
+  .roster-card{border:1px solid var(--line);border-radius:11px;padding:14px 15px;background:var(--paper-card);
+    display:flex;flex-direction:column;gap:10px;}
+  .roster-top{display:flex;align-items:center;gap:10px;}
+  .roster-name{font-size:13.5px;font-weight:700;color:var(--navy-deep);line-height:1.25;}
+  .roster-sport{font-size:11px;color:var(--ink-faint);}
+  .roster-status{display:flex;align-items:center;gap:12px;font-family:var(--font-mono);font-size:10px;
+    letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);}
+  .dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px;}
+  .dot-active{background:var(--good);box-shadow:0 0 0 3px rgba(30,143,111,.18);}
+  .dot-idle{background:var(--warn);}
+  .dot-offline{background:var(--ink-faint);}
+  .ci-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .ci-good{background:var(--good);} .ci-warn{background:var(--warn);} .ci-danger{background:var(--danger);
+    box-shadow:0 0 0 3px rgba(194,75,63,.2);}
+  .ci-pending{background:transparent;border:2px solid var(--line);}
+  .roster-checkin{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--ink-soft);
+    padding-top:9px;border-top:1px solid var(--line);}
+
+  .msg-list-row{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);align-items:flex-start;}
+  .msg-list-row:last-child{border-bottom:none;}
+  .msg-list-txt b{font-size:13.5px;color:var(--navy-deep);}
+  .msg-list-txt p{font-size:13px;color:var(--ink-soft);margin-top:2px;line-height:1.45;}
+  .msg-list-time{font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);margin-left:auto;
+    white-space:nowrap;padding-top:2px;}
+
+  textarea.compose{width:100%;border:1.5px solid var(--line);border-radius:9px;padding:12px 14px;
+    font-family:var(--font-body);font-size:13.5px;resize:none;color:var(--ink);background:var(--paper);}
+  textarea.compose:focus{outline:none;border-color:var(--lime-dim);}
+
+  /* ── ADMIN ───────────────────────────────────────────────────────── */
+  .stat-tile{border:1px solid var(--line);border-radius:12px;padding:18px 20px;background:var(--paper-card);}
+  .stat-num{font-family:var(--font-display);font-size:34px;font-weight:900;color:var(--navy-deep);
+    line-height:1;font-variant-numeric:tabular-nums;}
+  .stat-label{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink-faint);margin-top:8px;}
+  .stat-delta{font-size:11.5px;font-weight:700;margin-top:6px;}
+  .stat-delta.up{color:var(--good);} .stat-delta.flat{color:var(--ink-faint);}
+
+  .login-chart{display:flex;align-items:flex-end;gap:14px;height:110px;padding:6px 4px 0;}
+  .login-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+    height:100%;gap:7px;}
+  .login-bar{width:60%;border-radius:4px 4px 0 0;background:var(--navy-soft);}
+  .login-bar.peak{background:var(--lime);}
+
+  table.admin-table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  table.admin-table th{text-align:left;font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--ink-faint);padding:0 12px 10px;border-bottom:2px solid var(--line);
+    font-weight:700;}
+  table.admin-table td{padding:12px;border-bottom:1px solid var(--line);color:var(--ink);vertical-align:middle;}
+  table.admin-table tr:last-child td{border-bottom:none;}
+  .row-person{display:flex;align-items:center;gap:10px;}
+
+  .mentor-card{border:1px solid var(--line);border-radius:12px;padding:18px;background:var(--paper-card);}
+  .mentor-mentees{display:flex;gap:6px;margin-top:12px;}
+  .mini-av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-display);font-weight:800;font-size:10px;color:#fff;border:2px solid var(--paper-card);
+    margin-left:-8px;}
+  .mini-av:first-child{margin-left:0;}
+
+  .wrap-x{overflow-x:auto;}
+  @media (max-width:640px){.topbar-inner{gap:12px;} .role-btn{padding:8px 11px;font-size:10px;}
+    .demo-tag span{display:none;}}
+</style>
+
+<div id="app">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-mark"><span></span></div>
+        <div class="brand-word"><b>YSC HUB</b><small>Preview Build</small></div>
+      </div>
+      <div class="role-switch" id="roleSwitch">
+        <button class="role-btn active" data-role="student">Student</button>
+        <button class="role-btn" data-role="teacher">Teacher</button>
+        <button class="role-btn" data-role="admin">Admin</button>
+      </div>
+      <div class="demo-tag"><i></i><span>Sample data — every name below is fictional</span></div>
+    </div>
+    <div class="angle-band"></div>
+  </header>
+
+  <main>
+
+    <!-- ══════════════════════════ STUDENT ══════════════════════════ -->
+    <section class="view active" id="view-student">
+      <div class="view-head">
+        <div>
+          <span class="eyebrow">// Student Hub · signed in as Mia Castellanos</span>
+          <h1>Good morning, Mia.</h1>
+        </div>
+        <div class="view-sub">Grade 10 · Forward, Miami FC Youth Academy · mentor: Coach Elena Reyes</div>
+      </div>
+
+      <nav class="hub-tabs" id="studentTabs">
+        <button class="hub-tab active" data-panel="s-home">🏠 Home</button>
+        <button class="hub-tab" data-panel="s-today">📅 Today</button>
+        <button class="hub-tab" data-panel="s-growth">📈 Growth</button>
+        <button class="hub-tab" data-panel="s-people">👥 People</button>
+      </nav>
+
+      <div class="tab-panels">
+        <!-- HOME -->
+        <div class="tab-panel active" id="s-home">
+          <div class="grid g-2">
+            <div class="chat-shell">
+              <div class="chat-topbar">
+                <div class="chip-mentor"><i></i>Coach Reyes — online</div>
+              </div>
+              <div class="chat-log" id="chatLog">
+                <div class="msg">
+                  <div class="av">Y</div>
+                  <div class="bubble">Good morning, Mia. Chem lab report's due Thursday, and Saturday's the tournament in Orlando — let's get ahead of it today.</div>
+                </div>
+                <div class="focus-card">
+                  <span class="fc-eyebrow">Do right now</span>
+                  <b>Chemistry — Lab Report: Reaction Rates</b>
+                  <div class="fc-meta">Due Thursday · est. 45 min</div>
+                </div>
+              </div>
+              <div class="chips-row" id="chipsRow">
+                <button class="sugg-chip" data-chip="help-lab">Help me start the lab report</button>
+                <button class="sugg-chip" data-chip="weekend">What's this weekend look like?</button>
+                <button class="sugg-chip" data-chip="else">Something else</button>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              <div class="card">
+                <span class="card-label">// Next due</span>
+                <div class="plan-row" style="border:none;padding-top:0;">
+                  <div class="plan-check"></div>
+                  <div style="flex:1;">
+                    <div class="plan-txt">Chemistry Lab Report — Reaction Rates</div>
+                    <div class="plan-sub">Chemistry Adv. (2026-27) · Due Thu</div>
+                  </div>
+                </div>
+                <div class="plan-row" style="padding-bottom:0;">
+                  <div class="plan-check"></div>
+                  <div style="flex:1;">
+                    <div class="plan-txt">Problem Set 4 — Systems of Equations</div>
+                    <div class="plan-sub">Algebra II · Due Fri</div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-dark">
+                <span class="card-label">// This weekend</span>
+                <h3 style="margin-bottom:6px;">vs. Orlando City Youth</h3>
+                <div style="font-size:13px;color:#B9C1DC;line-height:1.6;">Sat · 10:00 AM kickoff<br>Travel day: Friday — flight leaves 2:40 PM</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TODAY -->
+        <div class="tab-panel" id="s-today">
+          <div class="grid g-2">
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              <div class="mentor-msg">
+                <div class="from">From Coach Reyes — your mentor · this week</div>
+                <p>"This week's about controlling what you can control. Travel is unpredictable — your prep doesn't have to be. Get Thursday's lab report done before Friday's flight, and you walk into Orlando with a clear head."</p>
+              </div>
+              <div class="card">
+                <span class="card-label">// Daily plan</span>
+                <div class="plan-row">
+                  <div class="plan-check"></div>
+                  <div style="flex:1;">
+                    <div class="plan-txt">Chemistry Lab Report — Reaction Rates</div>
+                    <div class="plan-sub">45 min</div>
+                  </div>
+                  <span class="plan-tag pill-danger">Due Thu</span>
+                </div>
+                <div class="plan-row">
+                  <div class="plan-check"></div>
+                  <div style="flex:1;">
+                    <div class="plan-txt">Problem Set 4 — Systems of Equations</div>
+                    <div class="plan-sub">30 min</div>
+                  </div>
+                  <span class="plan-tag pill-warn">Due Fri</span>
+                </div>
+              </div>
+              <div class="card">
+                <span class="card-label">// Sport schedule — this week</span>
+                <div class="sched-row">
+                  <div class="sched-day">TUE</div>
+                  <div class="sched-what"><b>Training — Miami FC Youth Academy</b><span>4:00–6:00 PM · Field 2</span></div>
+                </div>
+                <div class="sched-row">
+                  <div class="sched-day">THU</div>
+                  <div class="sched-what"><b>Training + film review</b><span>4:00–6:30 PM</span></div>
+                </div>
+                <div class="sched-row">
+                  <div class="sched-day">FRI</div>
+                  <div class="sched-what"><b>Travel to Orlando</b><span>Flight 2:40 PM · team bus to airport 12:30</span></div>
+                </div>
+                <div class="sched-row">
+                  <div class="sched-day">SAT</div>
+                  <div class="sched-what"><b>vs. Orlando City Youth</b><span>10:00 AM kickoff</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              <div class="card">
+                <span class="card-label">// Weekly load</span>
+                <div class="week-bars">
+                  <div class="week-bar-col"><div class="week-bar-n">2</div><div class="week-bar" style="height:40%;"></div><div class="week-day">MON</div></div>
+                  <div class="week-bar-col"><div class="week-bar-n">1</div><div class="week-bar" style="height:24%;"></div><div class="week-day">TUE</div></div>
+                  <div class="week-bar-col"><div class="week-bar-n">3</div><div class="week-bar today" style="height:62%;"></div><div class="week-day">WED</div></div>
+                  <div class="week-bar-col"><div class="week-bar-n">1</div><div class="week-bar" style="height:24%;"></div><div class="week-day">THU</div></div>
+                  <div class="week-bar-col"><div class="week-bar-n">!</div><div class="week-bar travel" style="height:30%;"></div><div class="week-day">FRI</div></div>
+                </div>
+                <div style="display:flex;gap:16px;margin-top:12px;font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);">
+                  <span>■ assignments due</span><span style="color:var(--warn);">▨ travel conflict</span>
+                </div>
+              </div>
+              <div class="card">
+                <span class="card-label">// Mentor chat</span>
+                <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;">
+                  <div class="avatar" style="background:var(--navy-soft);">ER</div>
+                  <div class="bubble" style="background:var(--paper-dim);color:var(--ink);">Saw the schedule — pack a study block for the flight Friday. You've got this. 💪</div>
+                </div>
+                <textarea class="compose" rows="2" placeholder="Message Coach Reyes…"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GROWTH -->
+        <div class="tab-panel" id="s-growth">
+          <div class="grid g-2">
+            <div class="goal-card">
+              <div class="goal-top">
+                <b>Raise Chemistry from a B to an A– this quarter</b>
+                <span class="pill pill-warn"><i></i>In progress</span>
+              </div>
+              <div style="font-size:12.5px;color:var(--ink-soft);">Academic goal · set with Coach Reyes</div>
+              <div class="bar-track"><div class="bar-fill" style="width:58%;"></div></div>
+              <div class="goal-meta">58% · next lab report is worth 12% of the grade</div>
+            </div>
+            <div class="goal-card">
+              <div class="goal-top">
+                <b>Clean up first-touch control under pressure</b>
+                <span class="pill pill-good"><i></i>On track</span>
+              </div>
+              <div style="font-size:12.5px;color:var(--ink-soft);">Athletic goal · coach feedback, last 3 sessions</div>
+              <div class="bar-track"><div class="bar-fill" style="width:74%;background:var(--good);"></div></div>
+              <div class="goal-meta">74% · noted improvement in Tuesday's session</div>
+            </div>
+          </div>
+          <div class="card" style="margin-top:16px;">
+            <span class="card-label">// Today's daily goal</span>
+            <div class="plan-row" style="border:none;padding:0;">
+              <div class="plan-check"></div>
+              <div class="plan-txt">Watch 10 min of match film before Thursday's session</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PEOPLE -->
+        <div class="tab-panel" id="s-people">
+          <div class="card" style="max-width:520px;">
+            <span class="card-label">// My support team</span>
+            <div class="person-row">
+              <div class="avatar" style="background:var(--navy-soft);">ER</div>
+              <div><div class="person-name">Coach Elena Reyes</div><div class="person-role">Chemistry · Mentor</div></div>
+              <div class="person-actions"><span class="pill pill-good"><i></i>Online</span></div>
+            </div>
+            <div class="person-row">
+              <div class="avatar" style="background:#8891A8;">MW</div>
+              <div><div class="person-name">Marcus Webb</div><div class="person-role">Algebra II</div></div>
+              <div class="person-actions"><span class="pill pill-neutral"><i></i>Offline</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════ TEACHER ══════════════════════════ -->
+    <section class="view" id="view-teacher">
+      <div class="view-head">
+        <div>
+          <span class="eyebrow">// Teacher Hub · signed in as Coach Elena Reyes</span>
+          <h1>Your mentees, at a glance.</h1>
+        </div>
+        <div class="view-sub">2 assigned mentees shown scoped to you — every teacher sees only their own.</div>
+      </div>
+
+      <nav class="hub-tabs" id="teacherTabs">
+        <button class="hub-tab active" data-panel="t-monitor">Student Monitor</button>
+        <button class="hub-tab" data-panel="t-messages">Messages</button>
+        <button class="hub-tab" data-panel="t-goals">Goals</button>
+      </nav>
+
+      <div class="tab-panels">
+        <!-- MONITOR -->
+        <div class="tab-panel active" id="t-monitor">
+          <div class="grid g-2">
+            <div>
+              <div class="card" style="margin-bottom:16px;">
+                <span class="card-label">// Live activity</span>
+                <div class="roster-grid" id="rosterGrid"></div>
+              </div>
+              <div class="card">
+                <span class="card-label">// Broadcast to all students</span>
+                <textarea class="compose" rows="2" placeholder="Type a message to all your mentees…"></textarea>
+                <button class="btn btn-lime" style="margin-top:10px;">Send to all →</button>
+              </div>
+            </div>
+            <div class="card-dark">
+              <span class="card-label">// Needs a look</span>
+              <div style="display:flex;gap:10px;align-items:flex-start;margin-top:6px;">
+                <span class="ci-dot ci-danger" style="margin-top:4px;"></span>
+                <div>
+                  <b style="color:#fff;font-size:13.5px;">Noah Kim asked for a reach-out</b>
+                  <div style="font-size:12px;color:#AEB7D1;margin-top:3px;">via this morning's Mentor Check-In (Slack)</div>
+                </div>
+              </div>
+              <button class="btn btn-outline-dark" style="margin-top:14px;width:100%;justify-content:center;">Message Noah →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- MESSAGES -->
+        <div class="tab-panel" id="t-messages">
+          <div class="grid g-2">
+            <div class="card">
+              <span class="card-label">// Weekly message to your mentees</span>
+              <textarea class="compose" rows="3">This week's about controlling what you can control. Travel is unpredictable — your prep doesn't have to be. Get Thursday's work done before Friday's flight.</textarea>
+              <button class="btn btn-lime" style="margin-top:10px;">Post for this week →</button>
+            </div>
+            <div class="card">
+              <span class="card-label">// Mentor inbox · 1 unread</span>
+              <div class="msg-list-row">
+                <div class="avatar" style="background:var(--danger);">NK</div>
+                <div class="msg-list-txt">
+                  <b>Noah Kim</b>
+                  <p>"Hey Coach, rough week — can we talk after practice?"</p>
+                </div>
+                <div class="msg-list-time">9:12 AM</div>
+              </div>
+              <div class="msg-list-row">
+                <div class="avatar" style="background:var(--navy-soft);">MC</div>
+                <div class="msg-list-txt">
+                  <b>Mia Castellanos</b>
+                  <p>"Turned in the lab report early — heading to practice!"</p>
+                </div>
+                <div class="msg-list-time">Yesterday</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GOALS -->
+        <div class="tab-panel" id="t-goals">
+          <div class="wrap-x">
+            <table class="admin-table" id="teacherGoalsTable"></table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════ ADMIN ══════════════════════════ -->
+    <section class="view" id="view-admin">
+      <div class="view-head">
+        <div>
+          <span class="eyebrow">// Admin Hub · organization-wide</span>
+          <h1>The whole cohort, one screen.</h1>
+        </div>
+        <div class="view-sub">Unrestricted view — the only role that isn't mentor-scoped.</div>
+      </div>
+
+      <nav class="hub-tabs" id="adminTabs">
+        <button class="hub-tab active" data-panel="a-overview">Overview</button>
+        <button class="hub-tab" data-panel="a-roster">Roster</button>
+        <button class="hub-tab" data-panel="a-mentors">Mentors</button>
+      </nav>
+
+      <div class="tab-panels">
+        <!-- OVERVIEW -->
+        <div class="tab-panel active" id="a-overview">
+          <div class="grid g-4" style="margin-bottom:16px;">
+            <div class="stat-tile"><div class="stat-num">5</div><div class="stat-label">Active students</div><div class="stat-delta flat">sample cohort</div></div>
+            <div class="stat-tile"><div class="stat-num">3</div><div class="stat-label">Mentors on staff</div><div class="stat-delta up">100% assigned</div></div>
+            <div class="stat-tile"><div class="stat-num">4.2</div><div class="stat-label">Avg. logins / week</div><div class="stat-delta up">↑ 0.6 vs last wk</div></div>
+            <div class="stat-tile"><div class="stat-num">18</div><div class="stat-label">Assignments tracked</div><div class="stat-delta flat">via Canvas sync</div></div>
+          </div>
+          <div class="grid g-2">
+            <div class="card">
+              <span class="card-label">// Hub logins this week</span>
+              <div class="login-chart" id="loginChart"></div>
+              <div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:10px;
+                color:var(--ink-faint);margin-top:6px;">
+                <span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span>
+              </div>
+            </div>
+            <div class="card">
+              <span class="card-label">// Mentor coverage</span>
+              <div id="coverageList"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ROSTER -->
+        <div class="tab-panel" id="a-roster">
+          <div class="card">
+            <div class="wrap-x">
+              <table class="admin-table" id="rosterTable">
+                <thead><tr><th>Student</th><th>Grade</th><th>Sport</th><th>Mentor</th><th>Status</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- MENTORS -->
+        <div class="tab-panel" id="a-mentors">
+          <div class="grid g-3" id="mentorCards"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var STUDENTS = [
+    {name:"Mia Castellanos", initials:"MC", grade:10, sport:"Soccer — Forward", mentor:"Elena Reyes",
+      color:"#31427A", presence:"active", checkin:"good", checkinNote:"Checked in — fired up for the weekend"},
+    {name:"Noah Kim", initials:"NK", grade:10, sport:"Soccer — Goalkeeper", mentor:"Elena Reyes",
+      color:"#C24B3F", presence:"offline", checkin:"danger", checkinNote:"Asked coach to reach out"},
+    {name:"Devon Marsh", initials:"DM", grade:11, sport:"Swimming", mentor:"Priya Anand",
+      color:"#1E8F6F", presence:"idle", checkin:"good", checkinNote:"Checked in — doing well"},
+    {name:"Lucas Ferreira", initials:"LF", grade:9, sport:"Tennis", mentor:"Marcus Webb",
+      color:"#8891A8", presence:"offline", checkin:"pending", checkinNote:"No check-in yet today"},
+    {name:"Ava Whitfield", initials:"AW", grade:12, sport:"Track & Field — 400m", mentor:"Marcus Webb",
+      color:"#D8862E", presence:"active", checkin:"warn", checkinNote:"Checked in — could use support"}
+  ];
+  var MENTORS = [
+    {name:"Coach Elena Reyes", role:"Chemistry · Mentor", mentees:["Mia Castellanos","Noah Kim"]},
+    {name:"Marcus Webb", role:"Algebra II · Mentor", mentees:["Lucas Ferreira","Ava Whitfield"]},
+    {name:"Priya Anand", role:"Performance Coach · Mentor", mentees:["Devon Marsh"]}
+  ];
+
+  function initials(n){return n.split(" ").map(function(w){return w[0];}).join("").slice(0,2).toUpperCase();}
+  function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+  // ── role + tab switching ────────────────────────────────────────────
+  function wireTabSwitcher(navEl, panelSelector){
+    navEl.addEventListener("click", function(e){
+      var btn = e.target.closest(".hub-tab");
+      if(!btn) return;
+      navEl.querySelectorAll(".hub-tab").forEach(function(b){b.classList.toggle("active", b===btn);});
+      var root = navEl.closest("section");
+      root.querySelectorAll(panelSelector).forEach(function(p){
+        p.classList.toggle("active", p.id === btn.dataset.panel);
+      });
+    });
+  }
+  wireTabSwitcher(document.getElementById("studentTabs"), ".tab-panel");
+  wireTabSwitcher(document.getElementById("teacherTabs"), ".tab-panel");
+  wireTabSwitcher(document.getElementById("adminTabs"), ".tab-panel");
+
+  document.getElementById("roleSwitch").addEventListener("click", function(e){
+    var btn = e.target.closest(".role-btn");
+    if(!btn) return;
+    document.querySelectorAll(".role-btn").forEach(function(b){b.classList.toggle("active", b===btn);});
+    document.querySelectorAll(".view").forEach(function(v){
+      v.classList.toggle("active", v.id === "view-" + btn.dataset.role);
+    });
+  });
+
+  // ── Teacher: Student Monitor roster cards ───────────────────────────
+  var rosterGrid = document.getElementById("rosterGrid");
+  var MY_MENTEES = STUDENTS.filter(function(s){return s.mentor === "Elena Reyes";});
+  rosterGrid.innerHTML = MY_MENTEES.map(function(s){
+    var presDot = "dot-" + s.presence;
+    var presLabel = s.presence.charAt(0).toUpperCase() + s.presence.slice(1);
+    var ciDot = "ci-" + s.checkin;
+    return '<div class="roster-card">'+
+      '<div class="roster-top"><div class="avatar" style="background:'+s.color+';">'+s.initials+'</div>'+
+      '<div><div class="roster-name">'+esc(s.name)+'</div><div class="roster-sport">'+esc(s.sport)+'</div></div></div>'+
+      '<div class="roster-status"><span><span class="dot '+presDot+'"></span>'+presLabel+'</span></div>'+
+      '<div class="roster-checkin"><span class="ci-dot '+ciDot+'"></span>'+esc(s.checkinNote)+'</div>'+
+    '</div>';
+  }).join("");
+
+  // ── Teacher: Goals table ────────────────────────────────────────────
+  var goalsTable = document.getElementById("teacherGoalsTable");
+  goalsTable.innerHTML = '<thead><tr><th>Student</th><th>Daily</th><th>Weekly</th><th>Active goals</th><th>Updated</th></tr></thead><tbody>'+
+    MY_MENTEES.map(function(s,i){
+      var daily = i===0 ? "1/1" : "0/1";
+      var weekly = i===0 ? "2/3" : "1/2";
+      var upd = i===0 ? "Today" : "2 days ago";
+      return '<tr><td class="row-person"><div class="avatar" style="width:28px;height:28px;font-size:10px;background:'+s.color+';">'+s.initials+'</div>'+esc(s.name)+'</td>'+
+        '<td>'+daily+'</td><td>'+weekly+'</td><td>2</td><td>'+upd+'</td></tr>';
+    }).join("") + '</tbody>';
+
+  // ── Admin: login chart (scaled 0–max) ───────────────────────────────
+  var LOGIN_DATA = [14, 11, 19, 13, 8]; // Mon–Fri, sample logins
+  var maxLogin = Math.max.apply(null, LOGIN_DATA);
+  var loginChart = document.getElementById("loginChart");
+  loginChart.innerHTML = LOGIN_DATA.map(function(v,i){
+    var h = Math.round((v / maxLogin) * 100);
+    var peak = v === maxLogin ? " peak" : "";
+    return '<div class="login-col"><div class="week-bar-n" style="color:var(--navy-deep);">'+v+'</div>'+
+      '<div class="login-bar'+peak+'" style="height:'+h+'%;"></div></div>';
+  }).join("");
+
+  // ── Admin: mentor coverage list ──────────────────────────────────────
+  var coverageList = document.getElementById("coverageList");
+  coverageList.innerHTML = MENTORS.map(function(m){
+    return '<div class="person-row"><div class="avatar" style="background:var(--navy-soft);">'+initials(m.name)+'</div>'+
+      '<div><div class="person-name">'+esc(m.name)+'</div><div class="person-role">'+esc(m.role)+'</div></div>'+
+      '<div class="person-actions"><span class="pill pill-neutral">'+m.mentees.length+' mentee'+(m.mentees.length===1?"":"s")+'</span></div></div>';
+  }).join("");
+
+  // ── Admin: roster table ──────────────────────────────────────────────
+  var rosterBody = document.querySelector("#rosterTable tbody");
+  rosterBody.innerHTML = STUDENTS.map(function(s){
+    return '<tr><td class="row-person"><div class="avatar" style="width:28px;height:28px;font-size:10px;background:'+s.color+';">'+s.initials+'</div>'+esc(s.name)+'</td>'+
+      '<td>'+s.grade+'</td><td>'+esc(s.sport)+'</td><td>'+esc(s.mentor)+'</td>'+
+      '<td><span class="pill pill-good"><i></i>Active</span></td></tr>';
+  }).join("");
+
+  // ── Admin: mentor cards ──────────────────────────────────────────────
+  var mentorCards = document.getElementById("mentorCards");
+  mentorCards.innerHTML = MENTORS.map(function(m){
+    var avatars = m.mentees.map(function(name){
+      var s = STUDENTS.filter(function(x){return x.name===name;})[0];
+      return '<div class="mini-av" style="background:'+(s?s.color:"#888")+';">'+(s?s.initials:"?")+'</div>';
+    }).join("");
+    return '<div class="mentor-card"><div class="avatar" style="background:var(--navy-soft);margin-bottom:10px;">'+initials(m.name)+'</div>'+
+      '<h3>'+esc(m.name)+'</h3><div style="font-size:12.5px;color:var(--ink-soft);margin-top:2px;">'+esc(m.role)+'</div>'+
+      '<div class="mentor-mentees">'+avatars+'</div></div>';
+  }).join("");
+
+  // ── Student Home: scripted AI mentor demo (linear, chip-driven) ─────
+  var chatLog = document.getElementById("chatLog");
+  var chipsRow = document.getElementById("chipsRow");
+
+  var SCRIPT = {
+    "help-lab": {
+      user: "Can you just tell me what the conclusion should say? I've got practice in an hour.",
+      ai: "Can't write it for you — that's the part where you show you actually understood the reaction. Quick question: which trial had the fastest reaction time?",
+      next: [{id:"trial3", label:"Trial 3 — most concentrated acid"}, {id:"check-data", label:"Let me check my data first"}]
+    },
+    "check-data": {
+      user: "Let me check my data first.",
+      ai: "Good instinct. Go look at your fastest time, then tell me which trial it was.",
+      next: [{id:"trial3", label:"It was Trial 3"}]
+    },
+    "trial3": {
+      user: "Trial 3 — most concentrated acid.",
+      ai: "Exactly. Higher concentration, faster rate — that IS your conclusion. Write it in your own words and I'll check it before you head out.",
+      next: [], focus:"⚡ Start Focus Mode — Lab Report (25 min)"
+    },
+    "weekend": {
+      user: "What's this weekend look like?",
+      ai: "Saturday: kickoff vs. Orlando City Youth at 10 AM — travel day is Friday, so get Thursday's lab report done before you leave. Sunday's open, nothing due Monday.",
+      next: [{id:"thanks", label:"Got it, thanks"}]
+    },
+    "thanks": {user:"Got it, thanks!", ai:"Anytime. Go get some rest before the flight.", next:[]},
+    "else": {
+      user: "Something else.",
+      ai: "I'm here — ask me anything about your classes, Canvas, or your week.",
+      next: []
+    }
+  };
+
+  function appendUser(text){
+    var el = document.createElement("div");
+    el.className = "msg user";
+    el.innerHTML = '<div class="av">M</div><div class="bubble"></div>';
+    el.querySelector(".bubble").textContent = text;
+    chatLog.appendChild(el);
+  }
+  function appendTyping(){
+    var el = document.createElement("div");
+    el.className = "typing"; el.id = "typingNow";
+    el.innerHTML = "<span></span><span></span><span></span>";
+    chatLog.appendChild(el);
+    return el;
+  }
+  function appendAI(text, focusLabel){
+    var el = document.createElement("div");
+    el.className = "msg";
+    el.innerHTML = '<div class="av">Y</div><div class="bubble"></div>';
+    el.querySelector(".bubble").textContent = text;
+    chatLog.appendChild(el);
+    if(focusLabel){
+      var f = document.createElement("button");
+      f.className = "btn btn-lime focus-btn";
+      f.type = "button";
+      f.textContent = focusLabel;
+      f.disabled = true;
+      chatLog.appendChild(f);
+    }
+  }
+  function renderChips(list){
+    chipsRow.innerHTML = "";
+    list.forEach(function(c){
+      var b = document.createElement("button");
+      b.className = "sugg-chip";
+      b.dataset.chip = c.id;
+      b.textContent = c.label;
+      chipsRow.appendChild(b);
+    });
+  }
+
+  chipsRow.addEventListener("click", function(e){
+    var btn = e.target.closest(".sugg-chip");
+    if(!btn || btn.disabled) return;
+    var turn = SCRIPT[btn.dataset.chip];
+    if(!turn) return;
+    chipsRow.querySelectorAll(".sugg-chip").forEach(function(b){b.disabled = true;});
+    appendUser(turn.user);
+    chatLog.scrollTop = chatLog.scrollHeight;
+    var typingEl = appendTyping();
+    chatLog.scrollTop = chatLog.scrollHeight;
+    setTimeout(function(){
+      typingEl.remove();
+      appendAI(turn.ai, turn.focus);
+      chatLog.scrollTop = chatLog.scrollHeight;
+      renderChips(turn.next || []);
+    }, 900);
+  });
+
+})();
+</script>
