@@ -1,0 +1,1449 @@
+html { font-size: 112%; }
+
+/* ── Back to Today button ─────────────────────────────────────────────────── */
+#back-to-today-bar {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  background: var(--sp-paper);
+  border-bottom: 1px solid var(--sp-ink);
+  display: flex;
+  align-items: center;
+}
+
+#back-to-today-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--sp-ink);
+  color: var(--sp-paper);
+  border: none;
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: .82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+  letter-spacing: .01em;
+}
+#back-to-today-btn:hover { opacity: .88; }
+#back-to-today-btn svg { flex-shrink: 0; }
+
+/* ── Virtual Meetings pane ──────────────────────────────────────────────────── */
+#htv-meetings {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  background: var(--bg, var(--sp-paper));
+  overflow: hidden;
+}
+#htv-meetings.htv-pane-active { display: flex; }
+
+/* No-huddle state */
+.huddle-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 40px 20px;
+  color: var(--sp-muted);
+}
+.huddle-empty-icon {
+  font-size: 3.5rem;
+  opacity: .6;
+}
+.huddle-empty h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--sp-ink);
+  margin: 0;
+}
+.huddle-empty p {
+  font-size: .9rem;
+  margin: 0;
+  text-align: center;
+  max-width: 340px;
+}
+.huddle-empty-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 4px;
+}
+.btn-start-huddle {
+  background: var(--sp-ink);
+  color: var(--sp-paper);
+  border: none;
+  border-radius: 10px;
+  padding: 10px 22px;
+  font-size: .92rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s;
+}
+.btn-start-huddle:hover { opacity: .88; }
+.btn-join-huddle {
+  background: var(--sp-paper);
+  color: var(--sp-ink);
+  border: 2px solid var(--sp-ink);
+  border-radius: 10px;
+  padding: 10px 22px;
+  font-size: .92rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s;
+}
+.btn-join-huddle:hover { background: var(--sp-tint); }
+
+/* Invitation notification banner */
+.huddle-invite-banner {
+  margin: 12px 20px 0;
+  background: var(--sp-ink);
+  color: var(--sp-paper);
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 4px 16px rgba(17,17,17,.3);
+  animation: slideDown .3s ease;
+}
+@keyframes slideDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+.huddle-invite-text { flex: 1; }
+.huddle-invite-title { font-weight: 700; font-size: .95rem; }
+.huddle-invite-sub   { font-size: .82rem; opacity: .85; margin-top: 2px; }
+.huddle-invite-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.btn-invite-join {
+  background: var(--sp-paper);
+  color: var(--sp-ink);
+  border: none;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: .85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn-invite-dismiss {
+  background: rgba(255,255,255,.15);
+  color: var(--sp-paper);
+  border: 1px solid rgba(255,255,255,.4);
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: .85rem;
+  cursor: pointer;
+}
+
+/* ── Huddle workspace (active) ──────────────────────────────────────────────── */
+.huddle-workspace {
+  display: flex;
+  flex: 1;
+  gap: 0;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Left: screens area */
+.huddle-screens-col {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  background: var(--sp-ink);
+  overflow: hidden;
+}
+
+/* Controls bar at top */
+.huddle-controls-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  background: rgba(255,255,255,.04);
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+.huddle-controls-title {
+  font-size: .88rem;
+  font-weight: 700;
+  color: var(--sp-paper);
+  flex: 1;
+  min-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.huddle-controls-title span {
+  display: block;
+  font-size: .72rem;
+  font-weight: 400;
+  color: rgba(255,255,255,.55);
+  margin-top: 1px;
+}
+.huddle-timer {
+  font-size: .85rem;
+  font-weight: 700;
+  color: rgba(255,255,255,.8);
+  font-variant-numeric: tabular-nums;
+  min-width: 48px;
+  text-align: center;
+}
+.huddle-pomodoro {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,.07);
+  border-radius: 8px;
+  padding: 4px 8px;
+}
+.huddle-pomo-time {
+  font-size: .82rem;
+  font-weight: 700;
+  color: var(--sp-paper);
+  font-variant-numeric: tabular-nums;
+  min-width: 42px;
+  text-align: center;
+}
+.huddle-pomo-btn {
+  background: rgba(255,255,255,.12);
+  border: none;
+  border-radius: 5px;
+  color: var(--sp-paper);
+  padding: 3px 7px;
+  font-size: .78rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+.huddle-pomo-btn:hover { background: rgba(255,255,255,.2); }
+
+.huddle-ctrl-btn {
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 8px;
+  color: var(--sp-paper);
+  padding: 5px 12px;
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s;
+}
+.huddle-ctrl-btn:hover { background: rgba(255,255,255,.18); }
+.huddle-ctrl-btn.btn-mute { }
+.huddle-ctrl-btn.btn-end  { background: rgba(220,38,38,.25); border-color: rgba(220,38,38,.5); color: #fca5a5; }
+.huddle-ctrl-btn.btn-end:hover { background: rgba(220,38,38,.45); }
+
+/* 2×2 student screen grid */
+.student-screens-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 8px;
+  padding: 8px;
+  flex: 1;
+  min-height: 0;
+}
+
+.student-screen {
+  background: var(--sp-ink);
+  border-radius: 10px;
+  border: 1.5px solid rgba(16,27,51,.5);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100px;
+  transition: border-color .3s;
+}
+.student-screen.screen-active {
+  border-color: rgba(16,27,51,.9);
+}
+.student-screen.screen-speaking {
+  border-color: var(--sp-ink);
+  box-shadow: 0 0 0 3px rgba(17,17,17,.4), inset 0 0 20px rgba(17,17,17,.15);
+}
+
+.screen-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: rgba(255,255,255,.35);
+}
+.screen-placeholder-icon { font-size: 2rem; opacity: .5; }
+.screen-placeholder-text { font-size: .8rem; font-weight: 500; }
+.screen-invite-btn {
+  background: rgba(16,27,51,.4);
+  color: rgba(255,255,255,.8);
+  border: 1px dashed rgba(255,255,255,.3);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: .8rem;
+  cursor: pointer;
+  margin-top: 6px;
+  transition: background .15s;
+}
+.screen-invite-btn:hover { background: rgba(16,27,51,.7); color: var(--sp-paper); }
+
+.screen-video-area {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.screen-avatar-initial {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--sp-ink);
+  color: var(--sp-paper);
+  font-size: 1.5rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* "Invited..." overlay */
+.screen-invited-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(10,22,40,.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: rgba(255,255,255,.7);
+}
+.screen-invited-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fbbf24;
+  animation: blink 1.2s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+.screen-invited-text { font-size: .82rem; font-weight: 600; }
+
+/* Name bar overlay */
+.screen-name-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0,0,0,.75) 0%, transparent 100%);
+  padding: 18px 10px 8px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+.screen-name {
+  color: var(--sp-paper);
+  font-size: .82rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.screen-active-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: pulse-green 2s infinite;
+  flex-shrink: 0;
+}
+@keyframes pulse-green {
+  0%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,.7); }
+  50% { box-shadow: 0 0 0 5px rgba(34,197,94,0); }
+}
+.screen-mic-cam {
+  display: flex;
+  gap: 5px;
+}
+.screen-mic-btn, .screen-cam-btn {
+  background: rgba(0,0,0,.4);
+  border: none;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: .7rem;
+  color: var(--sp-paper);
+  transition: background .15s;
+}
+.screen-mic-btn:hover, .screen-cam-btn:hover { background: rgba(0,0,0,.7); }
+.screen-mic-btn.muted { background: rgba(220,38,38,.7); }
+.screen-cam-btn.off   { background: rgba(100,116,139,.5); }
+
+/* Host "you" badge */
+.screen-host-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(16,27,51,.7);
+  color: var(--sp-paper);
+  font-size: .68rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  letter-spacing: .03em;
+}
+
+/* ── Right: collaborative tools panel ────────────────────────────────────── */
+.huddle-tools-panel {
+  width: 320px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--sp-paper);
+  border-left: 1px solid var(--sp-ink);
+  overflow: hidden;
+}
+.huddle-tools-header {
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  border-bottom: 2px solid var(--sp-ink);
+  gap: 0;
+  flex-shrink: 0;
+}
+.huddle-tool-tab {
+  padding: 10px 14px;
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--sp-muted);
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  white-space: nowrap;
+  transition: color .15s;
+}
+.huddle-tool-tab.active { color: var(--sp-ink); border-bottom-color: var(--sp-ink); }
+.huddle-tool-tab:hover  { color: var(--sp-ink); }
+
+.huddle-tool-pane { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+.huddle-tool-pane.active { display: flex; }
+
+/* Shared Notes */
+.huddle-notes-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.huddle-notes-meta {
+  padding: 6px 12px;
+  font-size: .75rem;
+  color: var(--sp-muted);
+  border-bottom: 1px solid var(--sp-ink);
+  background: var(--sp-tint);
+  flex-shrink: 0;
+}
+#huddle-notes-textarea {
+  flex: 1;
+  border: none;
+  outline: none;
+  resize: none;
+  padding: 12px;
+  font-size: .88rem;
+  font-family: inherit;
+  line-height: 1.6;
+  color: var(--sp-ink);
+  background: var(--sp-paper);
+}
+#huddle-notes-textarea::placeholder { color: var(--sp-muted); }
+.huddle-notes-footer {
+  padding: 8px 12px;
+  border-top: 1px solid var(--sp-ink);
+  font-size: .75rem;
+  color: var(--sp-muted);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+#huddle-notes-save-status { }
+.btn-notes-save {
+  background: var(--sp-ink);
+  color: var(--sp-paper);
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: .75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Whiteboard */
+.huddle-wb-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--sp-paper);
+}
+.huddle-wb-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--sp-ink);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+.wb-tool-btn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--sp-ink);
+  background: var(--sp-paper);
+  font-size: .78rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--sp-muted);
+  transition: background .1s;
+}
+.wb-tool-btn.active, .wb-tool-btn:hover { background: var(--sp-tint); color: var(--sp-ink); border-color: var(--sp-ink); }
+.wb-color-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid var(--sp-paper);
+  outline: 1px solid var(--sp-ink);
+  flex-shrink: 0;
+}
+.wb-color-swatch.active { outline: 2px solid var(--sp-ink); }
+#wb-canvas {
+  flex: 1;
+  cursor: crosshair;
+  display: block;
+  width: 100%;
+}
+
+/* Shared AI Chat */
+.huddle-chat-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+#huddle-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.huddle-chat-msg {
+  display: flex;
+  gap: 8px;
+  animation: fadeIn .2s ease;
+}
+@keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; } }
+.huddle-chat-msg.msg-user .hcm-bubble  { background: var(--sp-ink); color: var(--sp-paper); margin-left: auto; }
+.huddle-chat-msg.msg-ai   .hcm-bubble  { background: var(--sp-tint); color: var(--sp-ink); }
+.hcm-meta { font-size: var(--fs-xs); color: var(--sp-muted); margin-bottom: 2px; }
+.hcm-bubble { border-radius: 10px; padding: 8px 12px; font-size: var(--fs-base); line-height: 1.5; max-width: 100%; }
+.hcm-avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--sp-tint); display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: 700; color: var(--sp-muted); flex-shrink: 0; margin-top: 2px; }
+.huddle-chat-composer {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid var(--sp-ink);
+  flex-shrink: 0;
+}
+#huddle-chat-input {
+  flex: 1;
+  border: 1px solid var(--sp-ink);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: var(--fs-sm);
+  outline: none;
+  font-family: inherit;
+  resize: none;
+  min-height: 34px;
+  max-height: 80px;
+}
+#huddle-chat-input:focus { border-color: var(--sp-ink); }
+#huddle-chat-send {
+  background: var(--sp-ink);
+  color: var(--sp-paper);
+  border: none;
+  border-radius: 8px;
+  padding: 7px 12px;
+  cursor: pointer;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ── Huddle Creation Modal ────────────────────────────────────────────────── */
+.huddle-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn .2s ease;
+}
+.huddle-modal {
+  background: var(--sp-paper);
+  border-radius: 16px;
+  width: min(520px, calc(100vw - 40px));
+  max-height: calc(100vh - 60px);
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  padding: 28px 32px;
+}
+.huddle-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.huddle-modal-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--sp-ink);
+}
+.huddle-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: var(--sp-muted);
+  padding: 4px;
+  line-height: 1;
+}
+.huddle-modal-close:hover { color: var(--sp-muted); }
+
+/* Steps indicator */
+.huddle-steps {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 24px;
+}
+.huddle-step-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--sp-tint);
+  color: var(--sp-muted);
+  font-size: .82rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.huddle-step-dot.active { background: var(--sp-ink); color: var(--sp-paper); }
+.huddle-step-dot.done   { background: #22c55e; color: var(--sp-paper); }
+.huddle-step-line {
+  flex: 1;
+  height: 2px;
+  background: var(--sp-tint);
+}
+.huddle-step-line.done { background: #22c55e; }
+
+.huddle-modal-step { display: none; }
+.huddle-modal-step.active { display: block; }
+
+.huddle-field-label {
+  font-size: .82rem;
+  font-weight: 700;
+  color: var(--sp-muted);
+  margin-bottom: 6px;
+  display: block;
+}
+.huddle-field-input {
+  width: 100%;
+  border: 1.5px solid var(--sp-ink);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: .92rem;
+  font-family: inherit;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color .15s;
+}
+.huddle-field-input:focus { border-color: var(--sp-ink); }
+.huddle-field-group { margin-bottom: 18px; }
+.huddle-hint { font-size: .78rem; color: var(--sp-muted); margin-top: 4px; }
+
+/* Assignment selector */
+.huddle-assignment-list {
+  max-height: 160px;
+  overflow-y: auto;
+  border: 1.5px solid var(--sp-ink);
+  border-radius: 8px;
+  margin-top: 4px;
+}
+.huddle-assignment-opt {
+  padding: 8px 12px;
+  font-size: .84rem;
+  cursor: pointer;
+  border-bottom: 1px solid var(--sp-ink);
+  transition: background .1s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.huddle-assignment-opt:last-child { border-bottom: none; }
+.huddle-assignment-opt:hover { background: var(--sp-tint); }
+.huddle-assignment-opt.selected { background: var(--sp-tint); color: var(--sp-ink); font-weight: 600; }
+.huddle-assignment-opt input[type=radio] { accent-color: var(--sp-ink); }
+
+/* Invitee search + list */
+.huddle-people-search {
+  position: relative;
+  margin-bottom: 8px;
+}
+.huddle-people-search-input {
+  width: 100%;
+  border: 1.5px solid var(--sp-ink);
+  border-radius: 8px;
+  padding: 8px 12px 8px 32px;
+  font-size: .85rem;
+  font-family: inherit;
+  outline: none;
+  box-sizing: border-box;
+}
+.huddle-people-search-input:focus { border-color: var(--sp-ink); }
+.huddle-people-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--sp-muted);
+  font-size: .8rem;
+}
+.huddle-people-list {
+  border: 1.5px solid var(--sp-ink);
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.huddle-person-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--sp-ink);
+  transition: background .1s;
+}
+.huddle-person-row:last-child { border-bottom: none; }
+.huddle-person-row:hover { background: var(--sp-tint); }
+.huddle-person-row.selected { background: var(--sp-tint); }
+.huddle-person-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--sp-ink);
+  color: var(--sp-paper);
+  font-size: .8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.huddle-person-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.huddle-person-name { font-size: .85rem; font-weight: 500; color: var(--sp-ink); flex: 1; }
+.huddle-person-check { color: var(--sp-ink); font-weight: 700; font-size: .9rem; }
+.huddle-selected-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 22px;
+  margin-top: 8px;
+}
+.huddle-pill {
+  background: var(--sp-tint);
+  color: var(--sp-ink);
+  border-radius: 20px;
+  padding: 3px 10px 3px 8px;
+  font-size: .78rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.huddle-pill-remove {
+  cursor: pointer;
+  opacity: .6;
+  font-size: .7rem;
+}
+.huddle-pill-remove:hover { opacity: 1; }
+
+/* Modal footer */
+.huddle-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+.btn-huddle-back {
+  background: var(--sp-tint);
+  color: var(--sp-muted);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: .88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-huddle-next {
+  background: var(--sp-ink);
+  color: var(--sp-paper);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-size: .88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s;
+}
+.btn-huddle-next:hover { opacity: .88; }
+.btn-huddle-next:disabled { background: var(--sp-tint); cursor: not-allowed; }
+
+/* Starting step */
+.huddle-starting {
+  text-align: center;
+  padding: 20px 0;
+}
+.huddle-starting-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--sp-ink);
+  border-top-color: var(--sp-ink);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.huddle-starting-text { font-size: .95rem; color: var(--sp-ink); font-weight: 600; }
+.huddle-starting-sub  { font-size: .82rem; color: var(--sp-muted); margin-top: 4px; }
+
+/* ── Post-huddle summary card ─────────────────────────────────────────────── */
+.huddle-summary-card {
+  background: var(--sp-paper);
+  border-radius: 16px;
+  padding: 28px 32px;
+  max-width: 520px;
+  margin: 0 auto;
+  box-shadow: 0 4px 24px rgba(17,17,17,.1);
+  border: 1px solid rgba(16,27,51,.1);
+  animation: fadeIn .3s ease;
+}
+.huddle-summary-emoji { font-size: 2.5rem; margin-bottom: 8px; }
+.huddle-summary-title { font-size: 1.2rem; font-weight: 800; color: var(--sp-ink); margin-bottom: 4px; }
+.huddle-summary-sub   { font-size: .88rem; color: var(--sp-muted); margin-bottom: 20px; }
+.huddle-summary-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.huddle-stat {
+  background: var(--sp-tint);
+  border-radius: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--sp-ink);
+}
+.huddle-stat-n { font-size: 1.4rem; font-weight: 800; color: var(--sp-ink); }
+.huddle-stat-l { font-size: .78rem; color: var(--sp-muted); margin-top: 2px; }
+.huddle-summary-participants { margin-bottom: 16px; }
+.huddle-summary-row { font-size: .85rem; color: var(--sp-muted); margin-bottom: 6px; display: flex; align-items: flex-start; gap: 8px; }
+.huddle-summary-row strong { color: var(--sp-ink); }
+.huddle-summary-msg {
+  background: var(--sp-tint);
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-size: .88rem;
+  color: var(--sp-ink);
+  margin-bottom: 20px;
+  font-style: italic;
+}
+.huddle-summary-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.btn-summary-new  { background: var(--sp-ink); color: var(--sp-paper); border: none; border-radius: 8px; padding: 10px 20px; font-size: .88rem; font-weight: 700; cursor: pointer; }
+.btn-summary-back { background: var(--sp-tint); color: var(--sp-muted); border: none; border-radius: 8px; padding: 10px 20px; font-size: .88rem; font-weight: 600; cursor: pointer; }
+
+/* ── Teacher active huddle section (in Today tab) ─────────────────────────── */
+.teacher-huddles-section { }
+.teacher-huddle-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 12px;
+  background: var(--sp-tint);
+  border-radius: 10px;
+  border: 1px solid var(--sp-ink);
+  margin-bottom: 8px;
+}
+.teacher-huddle-info { flex: 1; min-width: 0; }
+.teacher-huddle-name { font-weight: 700; font-size: .9rem; color: var(--sp-ink); }
+.teacher-huddle-meta { font-size: .78rem; color: var(--sp-muted); margin-top: 2px; }
+.teacher-huddle-participants { font-size: .78rem; color: var(--sp-muted); margin-top: 4px; }
+.teacher-huddle-notes-preview {
+  font-size: .76rem;
+  color: var(--sp-muted);
+  margin-top: 6px;
+  max-height: 40px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-style: italic;
+}
+.teacher-huddle-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.teacher-huddle-btn {
+  background: var(--sp-paper);
+  border: 1px solid var(--sp-ink);
+  border-radius: 7px;
+  padding: 5px 10px;
+  font-size: .78rem;
+  cursor: pointer;
+  color: var(--sp-muted);
+  transition: background .1s;
+}
+.teacher-huddle-btn:hover { background: var(--sp-tint); color: var(--sp-ink); }
+
+/* Join huddle by code */
+.huddle-join-code-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.huddle-code-input {
+  flex: 1;
+  border: 1.5px solid var(--sp-ink);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: .88rem;
+  font-family: monospace;
+  outline: none;
+}
+.huddle-code-input:focus { border-color: var(--sp-ink); }
+.btn-join-by-code {
+  background: var(--sp-ink);
+  color: var(--sp-paper);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: .85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Teacher message banner inside huddle */
+.huddle-teacher-msg {
+  background: linear-gradient(135deg, #fffbeb, #fef3c7);
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: .82rem;
+  color: #92400e;
+  margin: 8px;
+  flex-shrink: 0;
+  animation: slideDown .3s ease;
+}
+
+/* ── Virtual Meetings Hub ──────────────────────────────────────────────────── */
+.meetings-hub {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 16px;
+  gap: 16px;
+}
+
+/* Quick Join Bar */
+.meetings-quick-join {
+  background: var(--sp-ink);
+  color: var(--sp-paper);
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.qjb-label {
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  opacity: .7;
+  flex-shrink: 0;
+}
+.qjb-name {
+  font-size: .95rem;
+  font-weight: 700;
+  flex: 1;
+  min-width: 0;
+}
+.qjb-class {
+  font-size: .78rem;
+  font-weight: 500;
+  opacity: .75;
+  background: rgba(255,255,255,.15);
+  border-radius: 6px;
+  padding: 1px 7px;
+  margin-left: 6px;
+}
+.qjb-sched {
+  font-size: .78rem;
+  opacity: .7;
+  flex-shrink: 0;
+}
+.qjb-join-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--sp-paper);
+  color: var(--sp-ink);
+  border: none;
+  border-radius: 20px;
+  padding: 7px 16px;
+  font-size: .82rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: transform .1s, box-shadow .1s;
+}
+.qjb-join-btn:hover { transform: scale(1.03); box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+
+/* Platform picker */
+.meetings-platform-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.meetings-platform-card {
+  background: var(--sp-paper);
+  border: 2px solid var(--sp-ink);
+  border-radius: 14px;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color .15s, box-shadow .15s, transform .1s;
+}
+.meetings-platform-card:hover {
+  border-color: var(--sp-ink);
+  box-shadow: 0 4px 16px rgba(17,17,17,.12);
+  transform: translateY(-1px);
+}
+.meetings-platform-card.active {
+  border-color: var(--sp-ink);
+  background: var(--sp-tint);
+  box-shadow: 0 0 0 3px rgba(17,17,17,.1);
+}
+.meetings-platform-icon {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--sp-tint);
+}
+.meetings-platform-icon--zoom {
+  background: var(--sp-ink);
+}
+.meetings-platform-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--sp-ink);
+}
+.meetings-platform-desc {
+  font-size: .78rem;
+  color: var(--sp-muted);
+  line-height: 1.4;
+}
+.meetings-platform-cta {
+  margin-top: 4px;
+  background: var(--sp-ink);
+  color: var(--sp-paper);
+  border-radius: 20px;
+  padding: 6px 18px;
+  font-size: .8rem;
+  font-weight: 700;
+}
+.meetings-platform-card.active .meetings-platform-cta {
+  opacity: .88;
+}
+
+/* Platform content area */
+.meetings-hint {
+  text-align: center;
+  color: var(--sp-muted);
+  font-size: .88rem;
+  padding: 24px;
+}
+.meetings-section {
+  background: var(--sp-paper);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.meetings-section-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--sp-ink);
+}
+.meetings-section-desc {
+  font-size: .84rem;
+  color: var(--sp-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Zoom action bar (Start / Join) */
+.zoom-action-bar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+  align-items: center;
+  background: var(--sp-tint);
+  border-radius: 10px;
+  padding: 16px;
+}
+.zoom-action-divider {
+  width: 1px;
+  height: 48px;
+  background: var(--sp-tint);
+}
+.zoom-action-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+.zoom-action-icon { font-size: 1.5rem; }
+.zoom-action-label {
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--sp-muted);
+}
+.zoom-action-btn {
+  background: var(--sp-ink);
+  color: var(--sp-paper);
+  border: none;
+  border-radius: 20px;
+  padding: 7px 20px;
+  font-size: .82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s;
+}
+.zoom-action-btn:hover { opacity: .88; }
+.zoom-join-row {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+  max-width: 280px;
+}
+.zoom-join-input {
+  flex: 1;
+  border: 1.5px solid var(--sp-ink);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: .82rem;
+  font-family: inherit;
+  outline: none;
+  min-width: 0;
+}
+.zoom-join-input:focus { border-color: var(--sp-ink); }
+
+/* Zoom links sections */
+.zoom-links-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.zoom-links-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.zoom-links-title {
+  font-size: .8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--sp-muted);
+}
+.zoom-add-link-btn {
+  background: none;
+  border: 1.5px solid var(--sp-ink);
+  color: var(--sp-ink);
+  border-radius: 20px;
+  padding: 3px 12px;
+  font-size: .78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .12s, color .12s;
+}
+.zoom-add-link-btn:hover { background: var(--sp-ink); color: var(--sp-paper); }
+.zoom-link-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--sp-tint);
+  border-radius: 8px;
+  border: 1px solid var(--sp-ink);
+}
+.zoom-link-info { flex: 1; min-width: 0; }
+.zoom-link-label {
+  font-size: .88rem;
+  font-weight: 600;
+  color: var(--sp-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.zoom-link-meta, .zoom-link-sched {
+  font-size: .74rem;
+  color: var(--sp-muted);
+  margin-top: 1px;
+}
+.zoom-link-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.zoom-join-link-btn {
+  display: inline-block;
+  background: var(--sp-ink);
+  color: var(--sp-paper);
+  border: none;
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: .78rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background .12s;
+}
+.zoom-join-link-btn:hover { opacity: .88; }
+.zoom-edit-btn, .zoom-del-btn {
+  background: none;
+  border: 1.5px solid var(--sp-ink);
+  color: var(--sp-muted);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: .75rem;
+  cursor: pointer;
+  transition: border-color .12s, color .12s;
+}
+.zoom-edit-btn:hover { border-color: var(--sp-ink); color: var(--sp-ink); }
+.zoom-del-btn:hover { border-color: #e74c3c; color: #e74c3c; }
+.zoom-empty {
+  font-size: .82rem;
+  color: var(--sp-muted);
+  padding: 10px 0;
+}
+
+/* Add/Edit form */
+.zoom-link-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--sp-tint);
+  border: 1.5px solid var(--sp-ink);
+  border-radius: 10px;
+  padding: 12px;
+}
+.zoom-form-input {
+  border: 1.5px solid var(--sp-ink);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: .85rem;
+  font-family: inherit;
+  outline: none;
+}
+.zoom-form-input:focus { border-color: var(--sp-ink); }
+.zoom-form-actions { display: flex; gap: 8px; }
+.zoom-form-save {
+  background: var(--sp-ink);
+  color: var(--sp-paper);
+  border: none;
+  border-radius: 8px;
+  padding: 7px 18px;
+  font-size: .82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.zoom-form-cancel {
+  background: none;
+  border: 1.5px solid var(--sp-ink);
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: .82rem;
+  cursor: pointer;
+  color: var(--sp-muted);
+}
+
+/* Zoom opened banner */
+/* Zoom tip strip at bottom of Zoom section */
+.zoom-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: var(--sp-tint);
+  border: 1.5px solid var(--sp-ink);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: .82rem;
+  color: var(--sp-ink);
+  margin-top: 14px;
+  line-height: 1.5;
+}
+.zoom-tip-icon { flex-shrink: 0; font-size: .95rem; }
+.zoom-tip kbd {
+  background: var(--sp-tint);
+  border: 1px solid var(--sp-ink);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-family: monospace;
+  font-size: .8rem;
+}
+.huddle-teacher-msg strong { color: #78350f; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   HOVER POP-OUT EFFECTS — huddle / meetings elements
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Platform picker cards ──────────────────────────────────────────────── */
+.meetings-platform-card {
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease,
+              background .15s;
+}
+.meetings-platform-card:not(.active):hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(17,17,17,.13);
+  border-color: rgba(16,27,51,.3);
+}
+.meetings-platform-card:active {
+  transform: translateY(-1px);
+}
+
+/* ── Zoom meeting link rows ─────────────────────────────────────────────── */
+.zoom-link-row {
+  transition: background .15s, border-color .15s;
+}
+.zoom-link-row:hover {
+  background: var(--sp-tint);
+  border-color: rgba(16,27,51,.2);
+}
+
+/* ── Zoom action cards ──────────────────────────────────────────────────── */
+.zoom-action-card {
+  transition: transform .2s ease;
+}
+.zoom-action-card:hover {
+  transform: translateY(-2px);
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   MOBILE — active huddle workspace
+   900px, not 767px — matches hub-tabs.css's convention of using the wider
+   breakpoint specifically for restructuring multi-column layouts (Today
+   tab's 3-column collapse, Game Plan widget grid), separate from
+   mobile.css's 767px "phone" breakpoint used for touch-target/spacing
+   rules. .huddle-tools-panel's fixed 320px width left almost no room for
+   .huddle-screens-col on a phone-width screen (confirmed via code — no
+   live device needed to see that 320px alone exceeds most phone
+   viewports); everything below needs real-device confirmation on actual
+   proportions/wrapping, not just that it mechanically applies.
+   ════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  /* Stack screens+controls above the tools panel instead of side-by-side.
+     Both hold actively-used features (seeing groupmates vs. notes/
+     whiteboard/chat), not a primary/secondary pair, so neither should just
+     get squeezed — the workspace scrolls instead, same "give the flex
+     parent a scroll" pattern used for #htv-today's mobile layout. */
+  .huddle-workspace {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  /* flex:none (not the base flex:1) — explicit min-height instead of
+     flex-grow, matching how .today-col-1/.today-col-2 were sized in
+     hub-tabs.css's mobile block: predictable fixed-ish sections rather
+     than relying on flex-grow distributing leftover space. Values below
+     are a starting point, not measured against a real screen. */
+  .huddle-screens-col {
+    flex: none;
+    min-height: 420px;
+  }
+  .huddle-tools-panel {
+    width: 100%;
+    flex-shrink: 0;
+    min-height: 420px;
+    border-left: none;
+    border-top: 1px solid var(--sp-ink);
+  }
+  /* Controls bar already has flex-wrap — tighten sizing a bit so fewer
+     items need to wrap to a second line on a narrow screen. */
+  .huddle-controls-bar {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+  .huddle-controls-title { min-width: 90px; font-size: .82rem; }
+  .huddle-timer { font-size: .8rem; min-width: 40px; }
+  .huddle-pomodoro { padding: 3px 6px; gap: 4px; }
+  .huddle-ctrl-btn { padding: 5px 9px; font-size: .76rem; }
+
+  /* Touch targets NOT already covered by mobile.css's global
+     `button, a { min-height: 44px; }` rule (@767px):
+     .wb-color-swatch is a <div>, not a button/anchor, so that global rule
+     never reaches it — needs its own explicit size here.
+     .screen-mic-btn/.screen-cam-btn ARE real <button>s and do inherit the
+     44px min-height automatically, but their CSS width stays at 26px,
+     which would render as a tall narrow oval rather than a circle —
+     matching width to the inherited height here, not adding a new rule
+     mobile.css doesn't already provide. */
+  .wb-color-swatch {
+    width: 28px;
+    height: 28px;
+  }
+  .screen-mic-btn, .screen-cam-btn {
+    width: 44px;
+  }
+}

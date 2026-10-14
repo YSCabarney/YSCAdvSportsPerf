@@ -1,0 +1,39 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   STICKER POP — shared design tokens
+   Single source of truth for color/type tokens across the Student, Teacher,
+   and Admin hubs (Admin keeps its own separate navy/Playfair look outside
+   the ".panel-head-right" style bits it borrowed from the old palette —
+   see CLAUDE.md). style.css / teacher.css point their legacy variable names
+   (--black, --cream, --coral, --gold, etc.) at these instead of repeating hex.
+   Appearance-only: nothing here is read by JS for logic, only for style.
+   ──────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Core palette */
+  --sp-ink:         #14141A;
+  --sp-paper:       #FFFFFF;
+  --sp-blue:        #2B3BFF;
+  --sp-yellow:      #FFD23D;
+  --sp-coral:       #FF5C4D;
+  --sp-tint:        #F4F4FF;
+  --sp-coral-tint:  #FFE1DD;
+  --sp-muted:       #4A4A57;
+  --sp-online:      #15803D;
+
+  /* Fonts */
+  --sp-font-display: 'Bricolage Grotesque', sans-serif;
+  --sp-font-body:     'DM Sans', sans-serif;
+  --sp-font-label:    'DM Sans', sans-serif; /* 800 weight, 13px, uppercase, 0.08em — applied per-site */
+
+  /* Signature sticker-card shell */
+  --sp-card-radius:   24px;
+  --sp-row-radius:    18px;
+  --sp-pill-radius:   22px;
+  --sp-badge-radius:  12px;
+  --sp-input-radius:  14px;
+  --sp-warn-radius:   16px;
+  --sp-border:        2px solid var(--sp-ink);
+  --sp-border-dashed: 2px dashed var(--sp-ink);
+  --sp-shadow:        5px 5px 0 var(--sp-ink);
+  --sp-shadow-sm:      3px 3px 0 var(--sp-ink);
+}

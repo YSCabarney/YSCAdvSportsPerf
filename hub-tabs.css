@@ -1,0 +1,2812 @@
+html { font-size: 112%; }
+body { opacity: 0; transition: opacity 0.5s ease; }
+
+/* ── Hub Tab View ─────────────────────────────────────────────────────── */
+#hub-tab-view {
+  flex: 1;
+  min-height: 0;
+  background: var(--bg, var(--sp-paper));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Tab Nav Bar ─────────────────────────────────────────────────────── */
+.htv-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  background: var(--sp-paper);
+  border-bottom: 2px solid var(--sp-ink);
+  flex-shrink: 0;
+}
+.htv-tab {
+  padding: 10px 16px;
+  min-height: 44px;
+  border: none;
+  background: none;
+  border-radius: 100px;
+  font-family: var(--sp-font-label);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sp-ink);
+  cursor: pointer;
+  transition: color .15s, background .15s;
+}
+.htv-tab:hover { background: var(--sp-tint); }
+.htv-tab .ti { font-size: 15px; vertical-align: -2px; }
+.htv-tab.htv-active { background: var(--sp-yellow); color: var(--sp-ink); }
+
+/* One-time "Home is your new starting point" tip (returning students) */
+.home-intro-tip {
+  z-index: 600;
+  max-width: 280px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 10px 10px 14px;
+  background: var(--sp-ink);
+  color: var(--sp-paper);
+  border: var(--sp-border);
+  border-radius: var(--sp-card-radius);
+  box-shadow: var(--sp-shadow);
+  font-family: var(--font-body, sans-serif);
+  font-size: 13px;
+  line-height: 1.45;
+  animation: home-intro-in .18s ease-out;
+}
+.home-intro-tip::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 22px;
+  width: 10px; height: 10px;
+  background: var(--sp-ink);
+  border-left: 2px solid var(--sp-ink);
+  border-top: 2px solid var(--sp-ink);
+  transform: rotate(45deg);
+}
+.home-intro-tip-x {
+  flex-shrink: 0;
+  background: none;
+  border: 0;
+  color: rgba(255,255,255,.55);
+  font-size: 12px;
+  line-height: 1;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+.home-intro-tip-x:hover { color: var(--sp-paper); }
+@keyframes home-intro-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Panes ──────────────────────────────────────────────────────────── */
+.htv-pane {
+  display: none;
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+.htv-pane.htv-pane-active { display: flex; flex-direction: column; gap: 16px; }
+
+/* Virtual Meetings pane overrides — no padding, no scroll, fills height */
+#htv-meetings.htv-pane-active {
+  padding: 0;
+  overflow: hidden;
+  gap: 0;
+}
+
+/* ── Home pane: AI Chat as a full-height surface, not a card in a pane ─────
+   #widget-chat moved here from #classicPanelArea (which gave it position:absolute
+   + inset). Here it's a plain flex child, so it needs to be told to fill the
+   pane. The pane itself must not scroll — the scroll lives inside #chat-messages
+   (which already has flex:1; overflow-y:auto; min-height:0). */
+#htv-home.htv-pane-active {
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+  min-height: 0;
+}
+#htv-home > #widget-chat {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  /* Sticker Pop forbids gradients, so the soft two-glow atmosphere wash this
+     used to have is gone — flat --sp-paper instead. */
+  background: var(--sp-paper);
+}
+/* Status strip — the only chrome above the conversation. It holds just the
+   mentor-availability chip, shown once presence resolves (updatePresenceUI()
+   in hub-tabs.js). Until then #chat-topbar stays display:none and the
+   conversation starts flush at the top. */
+#htv-home .chat-topbar {
+  position: relative; /* anchors .hss-memory-panel's dropdown below the chip */
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 8px clamp(16px, 6vw, 100px);
+  background: var(--sp-paper);
+  border-bottom: 2px solid var(--sp-ink);
+  flex-shrink: 0;
+}
+
+/* Mentor-availability chip (also a button → opens Mentor Chat) */
+.hss-mentor {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--sp-paper);
+  border: 2px solid var(--sp-ink);
+  border-radius: 100px;
+  padding: 3px 10px 3px 8px;
+  min-height: 28px;
+  font-family: var(--sp-font-label);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--sp-ink);
+  cursor: pointer;
+  transition: background .15s;
+}
+.hss-mentor:hover { background: var(--sp-tint); }
+.hss-mentor-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--sp-muted);
+  flex-shrink: 0;
+}
+.hss-mentor-dot.is-online  { background: var(--sp-online); box-shadow: 0 0 0 3px rgba(21,128,61,.22); }
+.hss-mentor-dot.is-offline { background: var(--sp-muted); }
+
+/* "What I know about you" memory chip — see loadMemoryChip() in app.js.
+   Same pill styling as .hss-mentor for visual consistency in the strip. */
+.hss-memory {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--sp-paper);
+  border: 2px solid var(--sp-ink);
+  border-radius: 100px;
+  padding: 3px 10px 3px 8px;
+  min-height: 28px;
+  font-family: var(--sp-font-label);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--sp-ink);
+  cursor: pointer;
+  transition: background .15s;
+}
+.hss-memory:hover, .hss-memory[aria-expanded="true"] { background: var(--sp-tint); }
+.hss-memory-icon { font-size: 11px; line-height: 1; }
+
+.hss-memory-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: clamp(16px, 6vw, 100px);
+  z-index: 20;
+  width: min(320px, calc(100vw - 32px));
+  background: var(--sp-paper);
+  border: var(--sp-border);
+  border-radius: var(--sp-card-radius);
+  box-shadow: var(--sp-shadow);
+  padding: 10px;
+}
+.hss-memory-panel-title {
+  font-family: var(--sp-font-label);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sp-muted);
+  padding: 2px 4px 8px;
+}
+.hss-memory-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 4px;
+  border-top: 1px solid rgba(20,20,26,.12);
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--sp-ink);
+}
+.hss-memory-item:first-of-type { border-top: none; }
+.hss-memory-item-text { flex: 1; }
+.hss-memory-forget {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--sp-muted);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 2px;
+  transition: color .15s;
+}
+.hss-memory-forget:hover { color: var(--sp-blue); }
+
+/* Roomy, reading-width column instead of edge-to-edge full bleed */
+#htv-home #chat-messages { padding: 24px clamp(16px, 6vw, 100px); }
+#htv-home .chat-input-area { padding: 14px clamp(16px, 6vw, 100px); }
+#htv-home .chat-bubble-wrap { max-width: 780px; }
+/* Slightly larger opening line so Home reads as a greeting, not a log entry */
+#htv-home #chat-messages > .chat-bubble-wrap.assistant:first-child .chat-bubble {
+  font-size: 1.12rem;
+  line-height: 1.6;
+}
+
+/* ── Cards ──────────────────────────────────────────────────────────── */
+.htv-card {
+  background: var(--sp-paper);
+  border-radius: var(--sp-card-radius);
+  border: var(--sp-border);
+  box-shadow: var(--sp-shadow);
+  padding: 18px 20px;
+}
+.htv-card-title {
+  font-family: var(--sp-font-label);
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--sp-ink);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+/* ── Broadcast Widget (Today tab) ───────────────────────────────────── */
+.htv-broadcast-empty {
+  text-align: center;
+  padding: 18px;
+  color: var(--sp-muted);
+  font-size: .9rem;
+  font-style: italic;
+}
+.htv-broadcast-inner { position: relative; }
+.htv-dismiss-btn {
+  position: absolute;
+  top: 8px; right: 8px;
+  background: var(--sp-paper);
+  border: 2px solid var(--sp-ink);
+  border-radius: 50%;
+  width: 28px; height: 28px;
+  font-size: .85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.htv-dismiss-btn:hover { background: var(--sp-paper); }
+.htv-broadcast-time {
+  font-size: .75rem;
+  color: var(--sp-muted);
+  margin-top: 8px;
+  text-align: right;
+}
+
+/* Mini chalkboard broadcast */
+.htv-bb {
+  background: #2d5016;
+  border-radius: 10px;
+  padding: 16px 20px;
+  color: #f0f0e8;
+  font-family: 'Caveat', cursive, sans-serif;
+  font-size: 1.1rem;
+  line-height: 1.5;
+  border: 3px solid #8B6914;
+  box-shadow: inset 0 0 20px rgba(0,0,0,.3);
+}
+.htv-bb-header { font-size: .78rem; color: #a8c890; letter-spacing: .1em; margin-bottom: 8px; text-transform: uppercase; }
+.htv-bb-text { white-space: pre-wrap; }
+
+/* Mini TV broadcast */
+.htv-tv {
+  background: #1a1a2e;
+  border-radius: 12px;
+  padding: 16px 20px;
+  color: #e0e0ff;
+  font-family: monospace;
+  border: 3px solid #4a4a7a;
+}
+.htv-tv-header { font-size: .78rem; color: #7b7bff; margin-bottom: 8px; }
+.htv-tv video, .htv-tv audio { width: 100%; border-radius: 6px; margin-top: 8px; }
+
+/* Mini record player broadcast */
+.htv-record {
+  background: #2d1b0e;
+  border-radius: 12px;
+  padding: 16px 20px;
+  color: #f5e6d3;
+  border: 3px solid #8B4513;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.htv-record-disc {
+  width: 52px; height: 52px;
+  background: radial-gradient(circle at 50% 50%, #101B33 20%, #333 40%, #101B33 42%, #222 60%, #333 70%, #1B263E 100%);
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: htv-spin 4s linear infinite paused;
+}
+.htv-record-disc.htv-playing { animation-play-state: running; }
+@keyframes htv-spin { to { transform: rotate(360deg); } }
+.htv-record-content { flex: 1; }
+.htv-record-header { font-size: .75rem; color: #c4956a; margin-bottom: 6px; }
+.htv-record audio { width: 100%; }
+
+/* ── Soccer Schedule ─────────────────────────────────────────────────── */
+.htv-soccer-list { display: flex; flex-direction: column; gap: 6px; }
+.htv-soccer-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 0;
+  background: var(--sp-tint);
+  border-left: 3px solid #27ae60;
+  border-bottom: 1px solid var(--sp-ink);
+  font-size: .86rem;
+}
+.htv-soccer-item.htv-today-item {
+  background: var(--sp-yellow);
+  border-left-color: var(--sp-ink);
+  font-weight: 700;
+}
+.htv-soccer-item.htv-game { background: var(--sp-yellow); border-left-color: var(--sp-ink); }
+.htv-soccer-item.htv-today-item.htv-game { background: var(--sp-yellow); border-left-color: var(--sp-ink); }
+.htv-soccer-day { font-weight: 800; color: var(--sp-ink); min-width: 80px; letter-spacing: -.01em; }
+.htv-soccer-time { color: var(--sp-muted); flex: 1; }
+.htv-soccer-type {
+  font-size: .68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 3px;
+  background: var(--sp-yellow);
+  color: var(--sp-ink);
+  border: 1px solid var(--sp-ink);
+}
+.htv-soccer-type.htv-type-game { background: var(--sp-yellow); color: var(--sp-ink); }
+.htv-soccer-type.htv-type-film { background: var(--sp-tint); color: var(--sp-muted); }
+.htv-upcoming-event {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: var(--sp-yellow);
+  border: 2px solid var(--sp-ink);
+  border-radius: var(--sp-row-radius);
+  font-size: .83rem;
+  color: var(--sp-ink);
+  font-weight: 600;
+}
+
+/* ── Task List ───────────────────────────────────────────────────────── */
+.htv-task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(20,20,26,.12);
+  font-size: .88rem;
+}
+.htv-task-item:last-child { border-bottom: none; }
+.htv-task-check {
+  width: 18px; height: 18px;
+  border: 2px solid var(--sp-ink);
+  border-radius: 4px;
+  flex-shrink: 0;
+  cursor: pointer;
+  margin-top: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .75rem;
+  transition: all .15s;
+}
+.htv-task-check.htv-done { background: #16a34a; border-color: #16a34a; color: var(--sp-paper); }
+.htv-task-text { flex: 1; }
+.htv-task-course { font-size: .72rem; color: var(--sp-muted); }
+.htv-task-due { font-size: .72rem; font-weight: 600; }
+.htv-task-due.htv-due-today { color: #dc2626; }
+.htv-task-due.htv-due-soon  { color: #d97706; }
+.htv-task-due.htv-due-later { color: var(--sp-muted); }
+.htv-task-text.htv-done-text { text-decoration: line-through; opacity: .5; }
+.htv-empty-state { text-align: center; padding: 20px; color: var(--sp-muted); font-size: .88rem; }
+
+/* ── Needs Attention ─────────────────────────────────────────────────── */
+.htv-needs-item {
+  padding: 12px 14px;
+  background: var(--sp-paper);
+  border-radius: 0;
+  border-left: 3px solid #e74c3c;
+  border-bottom: 1px solid var(--sp-ink);
+  margin-bottom: 0;
+  font-size: .88rem;
+}
+.htv-needs-item:last-child { border-bottom: none; }
+.htv-needs-name { font-weight: 700; color: var(--sp-ink); margin-bottom: 3px; }
+.htv-needs-course { font-size: .75rem; color: var(--sp-muted); margin-bottom: 6px; }
+.htv-needs-due { font-size: .75rem; color: #e74c3c; margin-bottom: 8px; font-weight: 600; }
+.htv-recovery-link {
+  color: var(--sp-ink);
+  font-size: .82rem;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+.htv-recovery-link:hover { text-decoration-color: var(--sp-blue); }
+
+/* ── Recovery Plan Modal ─────────────────────────────────────────────── */
+.htv-recovery-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 9100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.htv-recovery-modal {
+  background: var(--sp-paper);
+  border-radius: 16px;
+  padding: 28px 32px;
+  max-width: 520px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+}
+.htv-recovery-close {
+  position: absolute;
+  top: 14px; right: 16px;
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+  color: var(--sp-muted);
+}
+.htv-recovery-title {
+  font-family: var(--font-header-mid);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  color: var(--sp-ink);
+  margin-bottom: 6px;
+}
+.htv-recovery-course { font-size: .8rem; color: var(--sp-muted); margin-bottom: 18px; }
+.htv-recovery-body { font-size: .9rem; line-height: 1.65; color: var(--sp-ink); }
+.htv-recovery-body strong { color: var(--sp-ink); }
+.htv-recovery-body a { color: var(--sp-ink); }
+.htv-recovery-loading { display: flex; align-items: center; gap: 10px; color: var(--sp-muted); padding: 20px 0; }
+.htv-recovery-spinner {
+  width: 20px; height: 20px;
+  border: 2px solid var(--sp-ink);
+  border-top-color: var(--sp-ink);
+  border-radius: 50%;
+  animation: htv-spin 0.8s linear infinite;
+}
+.htv-canvas-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  padding: 8px 16px;
+  background: #E66000;
+  color: var(--sp-paper);
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: .85rem;
+  font-weight: 600;
+}
+.htv-canvas-link:hover { background: #d45500; }
+.htv-recovery-steps { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.htv-recovery-step {
+  background: var(--sp-tint);
+  border-radius: 10px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--sp-ink);
+}
+.htv-recovery-step-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.htv-recovery-step-num { font-weight: 700; font-size: .78rem; color: var(--sp-ink); text-transform: uppercase; letter-spacing: .05em; }
+.htv-recovery-step-time { font-size: .76rem; color: var(--sp-muted); background: var(--sp-tint); border-radius: 4px; padding: 2px 7px; }
+.htv-recovery-step-action { font-size: .9rem; color: var(--sp-ink); line-height: 1.4; }
+.htv-recovery-meta { font-size: .85rem; color: var(--sp-muted); background: var(--sp-tint); padding: 10px 14px; border-radius: 8px; margin-bottom: 10px; }
+.htv-recovery-meta strong { color: var(--sp-ink); }
+.htv-recovery-encourage { font-size: .88rem; color: var(--sp-ink); font-style: italic; font-weight: 500; padding: 10px 14px; background: #eff6ff; border-radius: 8px; margin-bottom: 4px; }
+
+
+/* ── People Tab ──────────────────────────────────────────────────────── */
+.htv-person-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(20,20,26,.12);
+}
+.htv-person-item:last-child { border-bottom: none; }
+
+/* Feedback row spans full width below avatar/info/actions */
+.htv-person-feedback {
+  flex: 0 0 100%;
+  margin-top: -4px;
+}
+.htv-dm-feedback {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: .8rem;
+  animation: htv-fadeIn .2s ease;
+}
+@keyframes htv-fadeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+.htv-dm-auth  { background: #eff2ff; color: var(--sp-ink); border: 1px solid #c7d2fe; }
+.htv-dm-error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+.htv-dm-connect-btn {
+  background: var(--sp-ink);
+  color: var(--sp-paper);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: .78rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.htv-dm-email-link {
+  color: #b91c1c;
+  text-decoration: underline;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.htv-dm-retry-btn {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: .76rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+.htv-avatar-wrap { position: relative; flex-shrink: 0; }
+.htv-avatar {
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--sp-paper);
+  letter-spacing: -.01em;
+}
+.htv-avail-dot {
+  position: absolute;
+  bottom: 1px; right: 1px;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--sp-paper);
+  cursor: pointer;
+  transition: transform .15s;
+}
+.htv-avail-dot:hover { transform: scale(1.3); }
+.htv-avail-available { background: #16a34a; }
+.htv-avail-busy      { background: #dc2626; }
+.htv-avail-offline   { background: #9ca3af; }
+.htv-person-info { flex: 1; min-width: 0; }
+.htv-person-name { font-weight: 600; font-size: .92rem; }
+.htv-person-role { font-size: .78rem; color: var(--sp-muted); }
+.htv-person-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.htv-msg-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 18px;
+  font-size: .76rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+}
+.htv-msg-slack { background: #4A154B; color: var(--sp-paper); }
+.htv-msg-email { background: var(--sp-ink); color: var(--sp-paper); }
+
+/* Tooltip */
+.htv-avail-tooltip {
+  position: fixed;
+  background: var(--sp-ink);
+  color: var(--sp-paper);
+  font-size: .76rem;
+  padding: 5px 10px;
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: 9999;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity .15s;
+}
+.htv-avail-tooltip.htv-tooltip-show { opacity: 1; }
+
+
+/* Mobile nav icon — shrink text for longer label (Goals/Growth tab) */
+.mob-nav-btn[data-tab="goals"] .mob-nav-label { font-size: .56rem; }
+
+/* ── Dark Mode ───────────────────────────────────────────────────────── */
+body.dark-mode #hub-tab-view { background: #0f172a; }
+body.dark-mode .htv-nav { background: var(--sp-ink); border-bottom-color: var(--sp-ink); }
+body.dark-mode .htv-tab { color: var(--sp-paper); }
+body.dark-mode .htv-tab:hover { background: rgba(255,255,255,.1); }
+body.dark-mode .htv-tab.htv-active { background: var(--sp-yellow); color: var(--sp-ink); }
+body.dark-mode .htv-card { background: var(--sp-ink); box-shadow: none; }
+body.dark-mode .htv-task-item { border-color: var(--sp-ink); }
+body.dark-mode .htv-person-item { border-color: var(--sp-ink); }
+body.dark-mode .htv-avail-dot { border-color: var(--sp-ink); }
+body.dark-mode .htv-recovery-modal { background: var(--sp-ink); color: var(--sp-paper); }
+body.dark-mode .htv-recovery-title { color: #93c5fd; }
+body.dark-mode .htv-recovery-course { color: var(--sp-muted); }
+body.dark-mode .htv-recovery-body { color: var(--sp-muted); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   HOVER POP-OUT EFFECTS — hub-tabs elements
+   (Must be in hub-tabs.css so these transitions override earlier definitions)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Hub tab buttons ────────────────────────────────────────────────────── */
+.htv-tab {
+  transition: color .15s, background .15s;
+  position: relative;
+}
+
+/* ── Task rows ──────────────────────────────────────────────────────────── */
+.htv-task-item {
+  transition: background .15s;
+  border-radius: 6px;
+}
+.htv-task-item:hover {
+  background: rgba(16,27,51,.05);
+}
+
+/* ── Needs attention rows ───────────────────────────────────────────────── */
+.htv-needs-item {
+  transition: background .15s, border-color .15s;
+}
+.htv-needs-item:hover {
+  background: rgba(249,115,22,.06);
+  border-color: rgba(249,115,22,.35);
+}
+
+/* ── People rows ────────────────────────────────────────────────────────── */
+.htv-person-item {
+  transition: background .15s;
+  border-radius: 8px;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+.htv-person-item:hover {
+  background: rgba(16,27,51,.05);
+}
+
+/* ── People action buttons ──────────────────────────────────────────────── */
+.htv-msg-btn {
+  transition: transform .15s ease, box-shadow .15s, opacity .15s;
+}
+.htv-msg-btn:hover {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 4px 12px rgba(0,0,0,.18);
+}
+.htv-msg-btn:active {
+  transform: translateY(0) scale(.98);
+  box-shadow: none;
+}
+
+
+/* ── Soccer / schedule items ────────────────────────────────────────────── */
+.htv-soccer-item {
+  transition: background .15s, border-color .15s;
+}
+.htv-soccer-item:hover {
+  background: rgba(22,163,74,.06);
+  border-color: rgba(22,163,74,.3);
+}
+
+/* ── Upcoming event pill ────────────────────────────────────────────────── */
+.htv-upcoming-event {
+  transition: background .15s, border-color .15s;
+}
+.htv-upcoming-event:hover {
+  background: rgba(22,163,74,.06);
+  border-color: rgba(22,163,74,.3);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Soccer Schedule — Popup & Enhancements
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Clickable schedule rows ─────────────────────────────────────────────── */
+.htv-soccer-clickable {
+  cursor: pointer;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.htv-soccer-row-main { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.htv-soccer-row-meta { display: flex; align-items: center; gap: 6px; }
+.htv-soccer-note-dot { font-size: .82rem; }
+.htv-soccer-cal-dot  { font-size: .78rem; color: #16a34a; font-weight: 700; }
+
+/* ── Sync All button ─────────────────────────────────────────────────────── */
+.htv-soccer-sync-btn {
+  display: block;
+  width: calc(100% - 2px);
+  margin: 12px 0 2px;
+  padding: 10px 0;
+  background: #f0fdf4;
+  border: 1.5px dashed #86efac;
+  border-radius: 10px;
+  color: #15803d;
+  font-size: .84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+  font-family: inherit;
+}
+.htv-soccer-sync-btn:hover { background: #dcfce7; border-color: #4ade80; }
+.htv-soccer-sync-btn:disabled { opacity: .6; cursor: default; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Soccer Popup Modal
+   ═══════════════════════════════════════════════════════════════════════════ */
+.soc-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  opacity: 0;
+  transition: opacity .22s ease;
+}
+.soc-popup-overlay.soc-popup-open { opacity: 1; }
+
+.soc-popup-card {
+  background: var(--sp-paper);
+  border-radius: 18px;
+  width: 100%;
+  max-width: 440px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 60px rgba(0,0,0,.25);
+  transform: translateY(28px) scale(.97);
+  transition: transform .26s cubic-bezier(.34,1.56,.64,1), opacity .22s ease;
+  opacity: 0;
+  display: flex;
+  flex-direction: column;
+}
+.soc-popup-overlay.soc-popup-open .soc-popup-card {
+  transform: none;
+  opacity: 1;
+}
+
+/* ── Header bar ──────────────────────────────────────────────────────────── */
+.soc-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--sp-ink);
+  color: var(--sp-paper);
+  border-radius: 18px 18px 0 0;
+  flex-shrink: 0;
+}
+.soc-popup-header-title {
+  font-size: .96rem;
+  font-weight: 700;
+  letter-spacing: -.01em;
+}
+.soc-popup-close {
+  background: rgba(255,255,255,.18);
+  border: none;
+  color: var(--sp-paper);
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background .15s;
+}
+.soc-popup-close:hover { background: rgba(255,255,255,.30); }
+
+/* ── Body ────────────────────────────────────────────────────────────────── */
+.soc-popup-body {
+  padding: 20px 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── Type badge ──────────────────────────────────────────────────────────── */
+.soc-popup-type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: .82rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  align-self: flex-start;
+}
+.soc-type-practice  { background: #dbeafe; color: var(--sp-ink); }
+.soc-type-game      { background: #fef3c7; color: #b45309; }
+.soc-type-match     { background: #fef3c7; color: #b45309; }
+.soc-type-film      { background: #ede9fe; color: #7c3aed; }
+.soc-type-training  { background: #dcfce7; color: #15803d; }
+
+/* ── Event date ──────────────────────────────────────────────────────────── */
+.soc-popup-event-date {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--sp-ink);
+  letter-spacing: -.02em;
+}
+
+/* ── Detail rows ─────────────────────────────────────────────────────────── */
+.soc-popup-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--sp-tint);
+  border: 1px solid var(--sp-ink);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+.soc-popup-detail-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: .92rem;
+  color: var(--sp-ink);
+}
+.soc-popup-detail-icon { font-size: 1rem; width: 20px; flex-shrink: 0; text-align: center; }
+
+/* ── Sections ────────────────────────────────────────────────────────────── */
+.soc-popup-section { display: flex; flex-direction: column; gap: 6px; }
+.soc-popup-section-label {
+  font-size: .78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--sp-muted);
+}
+.soc-popup-coach-notes {
+  font-size: .9rem;
+  color: var(--sp-ink);
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 10px 12px;
+  line-height: 1.5;
+}
+
+/* ── My notes textarea ───────────────────────────────────────────────────── */
+.soc-popup-notes-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--sp-ink);
+  border-radius: 10px;
+  font-size: .9rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 72px;
+  transition: border-color .15s;
+  color: var(--sp-ink);
+}
+.soc-popup-notes-input:focus {
+  outline: none;
+  border-color: var(--sp-ink);
+  box-shadow: 0 0 0 3px rgba(17,17,17,.08);
+}
+
+/* ── Attending toggle ────────────────────────────────────────────────────── */
+.soc-popup-attending-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: .92rem;
+  font-weight: 500;
+  color: var(--sp-ink);
+}
+.soc-popup-attending-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--sp-ink);
+  cursor: pointer;
+}
+.soc-attending-text { user-select: none; }
+
+/* ── Countdown ───────────────────────────────────────────────────────────── */
+.soc-popup-countdown {
+  font-size: .9rem;
+  font-weight: 600;
+  color: var(--sp-ink);
+  background: var(--sp-tint);
+  border: 1.5px solid #c7d2fe;
+  border-radius: 8px;
+  padding: 8px 14px;
+  text-align: center;
+}
+
+/* ── Action buttons ──────────────────────────────────────────────────────── */
+.soc-popup-actions {
+  display: flex;
+  gap: 8px;
+}
+.soc-popup-cal-btn {
+  flex: 1;
+  padding: 12px 16px;
+  background: var(--sp-ink);
+  color: var(--sp-paper);
+  border: none;
+  border-radius: 10px;
+  font-size: .88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, opacity .15s;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.soc-popup-cal-btn:hover:not(:disabled) { opacity: .88; }
+.soc-popup-cal-btn:disabled { opacity: .6; cursor: default; }
+.soc-popup-cal-synced {
+  background: #dcfce7 !important;
+  color: #15803d !important;
+  border: 1.5px solid #86efac !important;
+  flex-direction: column;
+  gap: 2px;
+  font-size: .82rem;
+}
+.soc-cal-remove {
+  font-size: .72rem;
+  opacity: .7;
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 400;
+}
+.soc-popup-save-btn {
+  flex: 1;
+  padding: 12px 16px;
+  background: var(--sp-tint);
+  color: var(--sp-ink);
+  border: 1.5px solid #c7d2fe;
+  border-radius: 10px;
+  font-size: .88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+  font-family: inherit;
+}
+.soc-popup-save-btn:hover { background: var(--sp-tint); }
+.soc-popup-save-msg {
+  text-align: center;
+  font-size: .84rem;
+  font-weight: 600;
+  color: #15803d;
+}
+.soc-popup-cal-msg {
+  text-align: center;
+  font-size: .84rem;
+  font-weight: 500;
+  padding: 4px 0;
+}
+.soc-cal-success { color: #15803d; }
+.soc-cal-error   { color: #dc2626; }
+
+/* ── Focus button on task items ───────────────────────────────────────────── */
+.htv-task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.htv-focus-btn {
+  flex-shrink: 0;
+  margin-left: auto;
+  background: none;
+  border: 1.5px solid var(--sp-ink);
+  border-radius: 8px;
+  padding: 4px 7px;
+  font-size: .9rem;
+  cursor: pointer;
+  color: var(--sp-ink);
+  transition: background .15s, border-color .15s;
+  line-height: 1;
+  align-self: center;
+}
+.htv-focus-btn:hover {
+  background: #eff0fe;
+  border-color: var(--sp-ink);
+}
+
+/* ── Study Schedule ──────────────────────────────────────────────────────── */
+.htv-study-schedule {
+  margin-top: 16px;
+  border-top: 2px solid var(--sp-ink);
+  padding-top: 14px;
+}
+.htv-schedule-title {
+  font-size: .82rem;
+  font-weight: 700;
+  color: var(--sp-ink);
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.htv-schedule-practice {
+  font-size: .82rem;
+  color: #2e7d32;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin-bottom: 10px;
+}
+.htv-schedule-desc {
+  font-size: .8rem;
+  color: var(--sp-muted);
+  margin-bottom: 10px;
+}
+.htv-schedule-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--sp-tint);
+  border: 1px solid var(--sp-ink);
+  border-radius: 10px;
+  margin-bottom: 7px;
+}
+.htv-schedule-block-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--sp-ink);
+  color: var(--sp-paper);
+  font-size: .73rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.htv-schedule-block-info { flex: 1; min-width: 0; }
+.htv-schedule-block-name {
+  font-size: .83rem;
+  font-weight: 600;
+  color: var(--sp-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.htv-schedule-block-meta {
+  font-size: .75rem;
+  color: var(--sp-muted);
+}
+.htv-schedule-focus-btn {
+  flex-shrink: 0;
+  padding: 5px 11px;
+  background: var(--sp-ink);
+  color: var(--sp-paper);
+  border: none;
+  border-radius: 8px;
+  font-size: .78rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background .15s;
+}
+.htv-schedule-focus-btn:hover:not(:disabled) { opacity: .88; }
+.htv-schedule-focus-btn:disabled { opacity: .6; cursor: default; }
+
+/* ── Add New Event button ────────────────────────────────────────────────── */
+.htv-soccer-add-btn {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  background: none;
+  border: 2px dashed var(--sp-ink);
+  border-radius: 10px;
+  color: var(--sp-ink);
+  font-size: .85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s;
+}
+.htv-soccer-add-btn:hover { background: #eff0fe; }
+
+/* ── Edit link inside soccer popup ──────────────────────────────────────── */
+.soc-popup-edit-link {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 8px;
+  background: none;
+  border: none;
+  color: var(--sp-muted);
+  font-size: .8rem;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: underline;
+  font-family: inherit;
+}
+.soc-popup-edit-link:hover { color: var(--sp-ink); }
+
+/* ── Soccer Edit Modal ───────────────────────────────────────────────────── */
+.soc-edit-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  z-index: 1500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  opacity: 0;
+  transition: opacity .25s;
+}
+.soc-edit-overlay.soc-popup-open { opacity: 1; }
+.soc-edit-modal {
+  background: var(--sp-paper);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0,0,0,.25);
+  transform: scale(.95);
+  transition: transform .25s;
+}
+.soc-edit-overlay.soc-popup-open .soc-edit-modal { transform: scale(1); }
+.soc-edit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--sp-ink);
+  color: var(--sp-paper);
+  font-weight: 700;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.soc-edit-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+.soc-edit-section-label {
+  font-size: .75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--sp-muted);
+  margin-bottom: 10px;
+}
+.soc-edit-note-banner {
+  background: var(--sp-tint);
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: .8rem;
+  color: var(--sp-muted);
+  margin-bottom: 14px;
+}
+.soc-edit-field {
+  margin-bottom: 12px;
+}
+.soc-edit-field.soc-edit-locked {
+  opacity: .55;
+}
+.soc-edit-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: .77rem;
+  font-weight: 600;
+  color: var(--sp-muted);
+  margin-bottom: 4px;
+}
+.soc-edit-lock { font-size: .82rem; }
+.soc-edit-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1.5px solid var(--sp-ink);
+  border-radius: 8px;
+  font-size: .87rem;
+  font-family: inherit;
+  color: var(--sp-ink);
+  background: var(--sp-paper);
+  box-sizing: border-box;
+  transition: border-color .15s;
+}
+.soc-edit-input:focus { outline: none; border-color: var(--sp-ink); }
+.soc-edit-input[readonly], .soc-edit-input[disabled] {
+  background: var(--sp-tint);
+  cursor: not-allowed;
+}
+.soc-edit-textarea { resize: vertical; min-height: 64px; }
+.soc-edit-select { cursor: pointer; }
+.soc-edit-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--sp-ink);
+  flex-shrink: 0;
+  background: var(--sp-tint);
+}
+.soc-edit-save-msg {
+  flex: 1;
+  font-size: .82rem;
+  font-weight: 600;
+}
+.soc-edit-delete-btn {
+  padding: 8px 14px;
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1.5px solid #fecaca;
+  border-radius: 8px;
+  font-size: .82rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  margin-right: auto;
+  transition: background .15s;
+}
+.soc-edit-delete-btn:hover { background: #fecaca; }
+.soc-edit-cancel-btn {
+  padding: 8px 16px;
+  background: none;
+  border: 1.5px solid var(--sp-ink);
+  border-radius: 8px;
+  font-size: .84rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--sp-muted);
+}
+.soc-edit-save-btn {
+  padding: 9px 20px;
+  background: var(--sp-ink);
+  color: var(--sp-paper);
+  border: none;
+  border-radius: 8px;
+  font-size: .84rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background .15s;
+}
+.soc-edit-save-btn:hover { opacity: .88; }
+
+@media (max-width: 767px) {
+  .soc-edit-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .soc-edit-modal {
+    max-width: 100%;
+    border-radius: 20px 20px 0 0;
+    max-height: 92vh;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   MENTOR CHAT TAB (formerly "Today", a 3-column layout — game-plan widgets,
+   Sport Schedule, Slack/Growth previews, Broadcast, Assignments Due, and
+   Recovery invite all removed 2026-09-18; see CLAUDE.md). Mentor Chat is now
+   this tab's only, always-expanded, full-height content — same simple
+   header/scroll-list/input-row model as #htv-home's chat panel.
+   ════════════════════════════════════════════════════════════════════════ */
+
+#htv-today.htv-pane-active {
+  padding: 0;
+  overflow: hidden;
+  gap: 0;
+  flex-direction: column;
+}
+
+#today-col-mentor {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  background: var(--sp-paper);
+}
+
+/* ── Column headers ─────────────────────────────────────────────────────── */
+.today-col-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 14px 16px 12px;
+  border-bottom: 2px solid var(--sp-ink);
+  flex-shrink: 0;
+  background: var(--sp-tint);
+}
+.today-col-head-dark {
+  background: var(--sp-paper);
+  border-bottom: 2px solid var(--sp-ink);
+  padding: 18px 18px 16px;
+}
+.today-col-eyebrow {
+  font-family: var(--sp-font-label);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sp-ink);
+}
+.today-col-sub {
+  font-family: var(--sp-font-label);
+  font-size: 12px;
+  color: var(--sp-muted);
+}
+.today-col-head-dark .today-col-sub { color: var(--sp-muted); }
+
+/* Unread-mentor-message signal moved to the tab button itself (see
+   showMentorUnreadBadge() in hub-tabs.js) now that Mentor Chat has no
+   collapsed-bar state of its own to badge. */
+.htv-tab.htv-tab-unread {
+  position: relative;
+}
+.htv-tab.htv-tab-unread::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--sp-coral);
+  border: 1px solid var(--sp-ink);
+}
+
+.today-section-divider {
+  padding: 10px 16px 8px;
+  font-family: var(--sp-font-label);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--sp-muted);
+  border-top: 1px solid var(--sp-ink);
+  margin-top: 4px;
+  background: var(--sp-tint);
+}
+
+/* ── Sport Schedule (People tab) ────────────────────────────────────────────
+   Moved from the old Today tab's Column 1 (#today-col-1) to #htv-people
+   2026-09-18 — loadSoccerSchedule()/renderSoccerSchedule() (hub-tabs.js)
+   only look up #htv-soccer-body by id, so the JS needed zero changes, just
+   a new .people-schedule-panel wrapper class here in place of the old
+   .today-col-1 scoping prefix. */
+.people-schedule-panel #htv-soccer-body { padding: 10px 0; }
+.people-schedule-panel .htv-soccer-list { padding: 0 10px; gap: 4px; }
+
+.people-schedule-panel .htv-soccer-item {
+  background: var(--sp-paper);
+  border: 0.5px solid var(--sp-ink);
+  border-left: 3px solid var(--sp-blue);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-radius: 0;
+  align-items: flex-start;
+}
+.people-schedule-panel .htv-soccer-item.htv-game { border-left-color: var(--sp-ink); }
+.people-schedule-panel .htv-soccer-item:has(.htv-type-film) { border-left-color: var(--sp-muted); }
+
+.people-schedule-panel .htv-soccer-row-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+.people-schedule-panel .htv-soccer-row-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.people-schedule-panel .htv-soccer-day {
+  font-family: var(--sp-font-label);
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--sp-ink);
+  min-width: auto;
+}
+.people-schedule-panel .htv-soccer-time {
+  font-family: var(--sp-font-label);
+  font-size: 13px;
+  color: var(--sp-muted);
+}
+.people-schedule-panel .htv-soccer-type {
+  font-family: var(--sp-font-label);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 0;
+  letter-spacing: 0.04em;
+}
+.people-schedule-panel .htv-soccer-type.htv-type-practice { background: var(--sp-yellow); color: var(--sp-ink); }
+.people-schedule-panel .htv-soccer-type.htv-type-game     { background: var(--sp-ink); color: var(--sp-paper); }
+.people-schedule-panel .htv-soccer-type.htv-type-film     { background: var(--sp-tint); color: var(--sp-muted); }
+
+.htv-next-up-banner {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  background: var(--sp-ink);
+  padding: 10px 16px;
+  margin-bottom: 4px;
+}
+.htv-next-up-label {
+  font-family: var(--sp-font-label);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.75);
+  letter-spacing: 0.1em;
+  flex-shrink: 0;
+}
+.htv-next-up-text {
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  color: var(--sp-paper);
+}
+
+.people-schedule-panel .htv-soccer-sync-btn {
+  display: block;
+  margin: 4px 10px;
+  font-size: 14px;
+  padding: 6px 12px;
+}
+.people-schedule-panel .htv-soccer-add-btn {
+  display: block;
+  margin: 4px 10px 8px;
+  font-size: 14px;
+}
+
+/* ── COLUMN 1 — Slack preview ───────────────────────────────────────────── */
+#htv-today-slack { padding: 6px 10px 2px; }
+.today-slack-item {
+  background: var(--sp-paper);
+  border: 0.5px solid var(--sp-ink);
+  padding: 10px 14px;
+  margin-bottom: 4px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.today-slack-item:hover { background: var(--sp-tint); }
+.today-slack-channel-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 3px;
+}
+.today-slack-channel {
+  font-family: var(--sp-font-label);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--sp-ink);
+}
+.today-slack-badge {
+  width: 16px;
+  height: 16px;
+  background: var(--sp-yellow);
+  border: 1px solid var(--sp-ink);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--sp-font-label);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--sp-ink);
+  flex-shrink: 0;
+}
+.today-slack-preview {
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  color: var(--sp-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.today-slack-empty {
+  padding: 10px 14px;
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  color: var(--sp-muted);
+}
+
+/* ── COLUMN 1 — Growth snapshot ─────────────────────────────────────────── */
+#htv-today-growth { padding: 6px 10px 10px; }
+.today-growth-item {
+  background: var(--sp-paper);
+  border: 0.5px solid var(--sp-ink);
+  border-left: 2px solid var(--sp-blue);
+  padding: 10px 14px;
+  margin-bottom: 4px;
+}
+.today-growth-label {
+  font-family: var(--sp-font-label);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--sp-blue);
+  margin-bottom: 3px;
+  letter-spacing: 0.08em;
+}
+.today-growth-text {
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  color: var(--sp-ink);
+  line-height: 1.5;
+}
+
+/* ── COLUMN 2 — Broadcast pinned ───────────────────────────────────────── */
+.today-broadcast-pinned {
+  flex-shrink: 0;
+  background: var(--sp-ink);
+}
+.today-broadcast-pinned .htv-broadcast-inner {
+  background: var(--sp-ink);
+  padding: 10px 14px;
+  position: relative;
+}
+.today-broadcast-pinned .htv-bb {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+.today-broadcast-pinned .htv-bb-header {
+  font-family: var(--sp-font-label);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.75);
+  letter-spacing: 0.12em;
+  margin-bottom: 4px;
+}
+.today-broadcast-pinned .htv-bb-text {
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  color: var(--sp-muted);
+  line-height: 1.5;
+}
+.today-broadcast-pinned .htv-dismiss-btn {
+  background: none;
+  border: none;
+  color: var(--sp-muted);
+  cursor: pointer;
+  font-size: 14px;
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  padding: 0;
+}
+.today-broadcast-pinned .htv-dismiss-btn:hover { color: var(--sp-muted); }
+.today-broadcast-pinned .htv-broadcast-time {
+  font-family: var(--sp-font-label);
+  font-size: 11px;
+  color: var(--sp-muted);
+  margin-top: 4px;
+}
+.today-broadcast-pinned .htv-broadcast-empty { display: none; }
+
+/* ── COLUMN 2 — Assignment items ─────────────────────────────────────────
+   Deliberately quiet and compact — a light reference panel, not a list of
+   obligations to react to. */
+#htv-tasks-body { padding: 6px 8px 8px; }
+.today-col-2 .htv-task-item {
+  background: var(--sp-paper);
+  border: 0.5px solid var(--sp-ink);
+  border-left: 0.5px solid var(--sp-ink);
+  padding: 9px 11px;
+  margin-bottom: 3px;
+  border-radius: 0;
+  gap: 8px;
+}
+.today-col-2 .htv-task-item:hover { background: var(--sp-tint); }
+.today-col-2 .htv-task-item:has(.htv-due-today),
+.today-col-2 .htv-task-item:has(.htv-due-soon) { border-left: 3px solid var(--sp-ink); }
+.today-col-2 .htv-task-course {
+  font-family: var(--sp-font-label);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--sp-blue);
+  margin-bottom: 2px;
+}
+.today-col-2 .htv-task-due {
+  font-family: var(--sp-font-label);
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--sp-muted);
+  margin-top: 2px;
+}
+.today-col-2 .htv-task-due.htv-due-today { color: var(--sp-ink); font-weight: 700; }
+.today-col-2 .htv-task-due.htv-due-soon  { color: var(--sp-ink); font-weight: 700; }
+.today-col-2 .htv-task-text > div:first-child {
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--sp-ink);
+  margin-bottom: 2px;
+}
+
+/* ── Recovery Plan invite — calm entry point, not an itemized list ────────
+   Only takes up space when there's something to show (see :not(:empty)) —
+   see loadRecoveryInvite() in hub-tabs.js. */
+#htv-recovery-invite:not(:empty) {
+  padding: 10px 8px 4px;
+  border-top: 1px solid var(--sp-ink);
+}
+.htv-recovery-invite-link,
+.htv-recovery-invite-pick {
+  display: block;
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+  color: #C85A2E;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.htv-recovery-invite-link:hover,
+.htv-recovery-invite-pick:hover { opacity: 0.82; }
+.htv-recovery-invite-pick:not(:first-child) { margin-top: 4px; }
+
+/* ── Mentor Presence indicator ──────────────────────────────────────────── */
+.mentor-presence-indicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+}
+.mentor-presence-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--sp-muted);
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+.mentor-presence-dot.is-online  { background: var(--sp-online); }
+.mentor-presence-dot.is-offline { background: var(--sp-muted); }
+.mentor-presence-label {
+  font-family: var(--sp-font-label);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sp-muted);
+  transition: color 0.3s;
+}
+.mentor-presence-label.is-online  { color: var(--sp-online); }
+.mentor-presence-label.is-offline { color: var(--sp-muted); }
+.mentor-unavailable-notice {
+  font-family: var(--sp-font-label);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--sp-ink);
+  background: var(--sp-paper);
+  border-left: 2px solid var(--sp-ink);
+  padding: 8px 12px;
+  margin: 0 12px 8px;
+}
+
+/* ── COLUMN 3 — Mentor Chat ─────────────────────────────────────────────── */
+.htv-mentor-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  background: var(--sp-paper);
+}
+.htv-mentor-msg { display: flex; flex-direction: column; }
+.htv-mentor-msg-ai,
+.htv-mentor-msg-mentor { align-items: flex-start; }
+.htv-mentor-msg-user   { align-items: flex-end; }
+.htv-mentor-label {
+  font-family: var(--sp-font-label);
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--sp-muted);
+  margin-bottom: 4px;
+  letter-spacing: 0.08em;
+}
+/* Mentor replies sit above a yellow bubble — ink label for contrast; AI replies
+   sit above a blue one — white, matching the other on-blue labels. */
+.htv-mentor-msg-mentor .htv-mentor-label { color: var(--sp-ink); }
+.htv-mentor-msg-ai .htv-mentor-label     { color: rgba(255,255,255,.8); }
+.htv-mentor-bubble { max-width: 92%; padding: 10px 12px; border-radius: var(--sp-row-radius); }
+/* AI auto-response: "AI coach" featured-card treatment — blue fill per the Sticker Pop system */
+.htv-mentor-msg-ai .htv-mentor-bubble     { background: var(--sp-blue); color: var(--sp-paper); }
+/* Human mentor reply: "mentor message" featured-card treatment — yellow fill, ink border + hard shadow, per the Sticker Pop system */
+.htv-mentor-msg-mentor .htv-mentor-bubble { background: var(--sp-yellow); border: 2px solid var(--sp-ink); box-shadow: var(--sp-shadow-sm); }
+/* Student message: ink fill, right-aligned */
+.htv-mentor-msg-user .htv-mentor-bubble   { background: var(--sp-ink); color: var(--sp-paper); }
+/* Welcome / empty state */
+.mentor-welcome {
+  padding: 16px;
+  background: var(--sp-yellow);
+  border: var(--sp-border);
+  border-radius: var(--sp-card-radius);
+  box-shadow: var(--sp-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.mentor-welcome-label {
+  font-family: var(--sp-font-label);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sp-ink);
+}
+.mentor-welcome-name {
+  font-family: var(--font-body);
+  font-size: var(--fs-md);
+  font-weight: 600;
+  color: var(--sp-ink);
+}
+.mentor-welcome-text {
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  color: var(--sp-muted);
+  line-height: 1.6;
+}
+.htv-mentor-bubble-text {
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.htv-mentor-msg-ai .htv-mentor-bubble-text     { color: var(--sp-paper); }
+.htv-mentor-msg-mentor .htv-mentor-bubble-text { color: var(--sp-ink); }
+.htv-mentor-msg-user .htv-mentor-bubble-text   { color: var(--sp-paper); }
+.htv-mentor-cursor { display: inline-block; animation: htv-blink 1s step-end infinite; }
+@keyframes htv-blink { 50% { opacity: 0; } }
+
+/* ── Mentor Chat: day dividers and timestamped messages ──────────────── */
+.mc-day-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 0 10px;
+  flex-shrink: 0;
+}
+.mc-divider-line {
+  flex: 1;
+  height: 1px;
+  background: rgba(20,20,26,.16);
+}
+.mc-divider-label {
+  font-family: var(--sp-font-label);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sp-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 3px 10px;
+  background: var(--sp-paper);
+  border: 1px solid var(--sp-ink);
+  border-radius: 100px;
+}
+.mc-message {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 4px;
+  max-width: 88%;
+}
+.mc-from-mentor { align-self: flex-start; }
+.mc-from-student { align-self: flex-end; }
+.mc-msg-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mc-from-student .mc-msg-meta { flex-direction: row-reverse; }
+.mc-msg-sender {
+  font-family: var(--sp-font-label);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sp-muted);
+}
+.mc-msg-time {
+  font-family: var(--sp-font-label);
+  font-size: 10px;
+  color: var(--sp-muted);
+  letter-spacing: 0.04em;
+}
+.mc-msg-bubble {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 12px 16px;
+  border-radius: var(--sp-row-radius);
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  line-height: 1.6;
+}
+.mc-from-mentor .mc-msg-bubble {
+  background: var(--sp-yellow);
+  border: 2px solid var(--sp-ink);
+  box-shadow: var(--sp-shadow-sm);
+  color: var(--sp-ink);
+}
+.mc-from-student .mc-msg-bubble {
+  background: var(--sp-ink);
+  color: var(--sp-paper);
+}
+
+.htv-mentor-input-area {
+  display: flex;
+  gap: 10px;
+  padding: 14px;
+  border-top: 2px solid var(--sp-ink);
+  background: var(--sp-paper);
+  flex-shrink: 0;
+}
+.htv-mentor-input {
+  flex: 1;
+  background: var(--sp-paper);
+  border: 2px solid var(--sp-ink);
+  color: var(--sp-ink);
+  padding: 9px 14px;
+  min-height: 44px;
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  outline: none;
+  border-radius: 22px;
+  min-width: 0;
+}
+.htv-mentor-input::placeholder { color: var(--sp-muted); }
+.htv-mentor-input:focus { border-color: var(--sp-ink); box-shadow: var(--sp-shadow-sm); }
+.htv-mentor-send {
+  background: var(--sp-ink);
+  border: 2px solid var(--sp-ink);
+  border-radius: 22px;
+  padding: 0 18px;
+  min-height: 44px;
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--sp-paper);
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.htv-mentor-send:hover { opacity: .85; }
+.htv-mentor-send:disabled { opacity: 0.5; cursor: not-allowed; }
+.htv-mentor-link {
+  color: var(--sp-blue);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.htv-mentor-link:hover { opacity: 0.8; }
+
+/* No #htv-today PANE-level mobile override — the earlier version
+   (overflow-y:auto + 142px bottom padding on the pane, inherited from when
+   this was a 3-column layout) made the WHOLE pane scroll as one block,
+   pushing the input row out of view past the last message instead of
+   staying pinned. #htv-today.htv-pane-active's desktop rule (padding:0,
+   overflow:hidden) is correct on mobile too — #today-col-mentor's own
+   internal flex:1/min-height:0 chain (header → .htv-mentor-messages'
+   flex:1;overflow-y:auto;min-height:0 → input row) keeps the input row
+   pinned and only the message list scrolling, same pattern as #htv-home.
+
+   That's not the whole story on mobile, though: #mobile-bottom-nav is
+   `position:fixed; bottom:0` (mobile.css) — it doesn't take up flow space,
+   it *overlaps* whatever's at the true bottom of the viewport. A full-height
+   pane's own last flex child (the input row here) ends up rendering fully
+   behind it. Live-confirmed via getBoundingClientRect() on a real mobile
+   viewport: #htv-mentor-input's whole box sat exactly under
+   #mobile-bottom-nav, 0 visible/tappable pixels. (#htv-home's #chat-input
+   has this same bug, just less severely — its input row starts a bit higher
+   so ~18px of it peeks out above the nav; that's a separate, pre-existing
+   issue, not something to fix here.) Scoped fix: give Mentor Chat's own
+   input row bottom clearance matching the floating nav's real footprint
+   (16px gap + 6px padding + 52px inner + 4px border ≈ 84px, was 58px when
+   the nav sat flush — see mobile.css's #mobile-bottom-nav) — NOT the old
+   142px, which also cleared the floating Mentor Chat button that's now
+   hidden on this tab (see mob-on-mentor-tab in mobile.js/mobile.css) and so
+   no longer needs clearing here. */
+@media (max-width: 900px) {
+  .htv-mentor-input-area {
+    padding-bottom: calc(12px + 84px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* ── Growth Page ──────────────────────────────────────────────────────────────── */
+.growth-page {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.growth-section {
+  background: var(--sp-paper);
+  border: 2px solid var(--sp-ink);
+  border-radius: var(--sp-card-radius);
+  box-shadow: var(--sp-shadow);
+  overflow: hidden;
+}
+
+.growth-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 2px solid var(--sp-ink);
+  background: var(--sp-tint);
+}
+
+.growth-eyebrow {
+  font-family: var(--sp-font-label);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sp-blue);
+  margin-bottom: 4px;
+}
+
+.growth-title {
+  font-family: var(--font-header-mid);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  color: var(--sp-ink);
+}
+
+.growth-add-btn {
+  background: var(--sp-ink);
+  border: 2px solid var(--sp-ink);
+  border-radius: var(--sp-pill-radius);
+  padding: 10px 18px;
+  min-height: 44px;
+  font-family: var(--sp-font-label);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sp-paper);
+  cursor: pointer;
+  transition: opacity 0.12s;
+  white-space: nowrap;
+}
+.growth-add-btn:hover { opacity: .88; }
+
+.goals-container {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 60px;
+}
+
+.goal-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--sp-paper);
+  border: 0.5px solid var(--sp-ink);
+  border-left: 3px solid var(--sp-ink);
+  transition: border-left-color 0.12s;
+}
+.goal-item.completed {
+  border-left-color: var(--sp-yellow);
+  opacity: 0.7;
+}
+
+.goal-checkbox {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--sp-ink);
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.goal-textarea {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  color: var(--sp-ink);
+  line-height: 1.6;
+  resize: none;
+  min-height: 26px;
+  padding: 0;
+}
+.goal-textarea::placeholder { color: var(--sp-muted); }
+
+.goal-remove-btn {
+  background: transparent;
+  border: none;
+  color: var(--sp-muted);
+  cursor: pointer;
+  font-size: 20px;
+  padding: 0 4px;
+  flex-shrink: 0;
+  line-height: 1;
+  transition: color 0.12s;
+}
+.goal-remove-btn:hover { color: #cc4444; }
+
+.growth-completed-toggle {
+  padding: 10px 18px;
+  border-top: 2px solid var(--sp-ink);
+  font-family: var(--sp-font-label);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sp-muted);
+  cursor: pointer;
+  background: var(--sp-tint);
+}
+.growth-completed-toggle:hover { color: var(--sp-blue); }
+
+.completed-container {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--sp-tint);
+  border-top: 2px solid var(--sp-ink);
+}
+
+.growth-empty {
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  color: var(--sp-muted);
+  padding: 16px 4px;
+  text-align: center;
+}
+
+.growth-save-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 16px 0;
+  border-top: 1px solid var(--sp-ink);
+  margin-top: 20px;
+}
+
+.growth-status {
+  font-family: var(--sp-font-label);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  display: none;
+}
+
+#save-growth-btn {
+  background: var(--sp-ink);
+  border: 2px solid var(--sp-ink);
+  border-radius: var(--sp-pill-radius);
+  padding: 12px 24px;
+  min-height: 44px;
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--sp-paper);
+  cursor: pointer;
+  transition: opacity 0.12s;
+}
+#save-growth-btn:hover    { opacity: 0.88; }
+#save-growth-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.growth-subtitle {
+  font-family: var(--sp-font-label);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--sp-muted);
+  text-transform: uppercase;
+  margin-top: 3px;
+}
+
+.growth-progress-bar {
+  height: 3px;
+  background: var(--sp-tint);
+  position: relative;
+  overflow: hidden;
+}
+
+.growth-progress-fill {
+  height: 100%;
+  background: var(--sp-blue);
+  transition: width 0.4s ease;
+}
+
+.growth-progress-label {
+  font-family: var(--sp-font-label);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sp-blue);
+  padding: 6px 18px;
+  background: var(--sp-tint);
+  border-bottom: 2px solid var(--sp-ink);
+}
+
+.growth-reset-note {
+  padding: 8px 18px;
+  font-family: var(--sp-font-label);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sp-muted);
+  background: var(--sp-tint);
+  border-top: 2px solid var(--sp-ink);
+}
+
+/* ── Daily Game Plan widgets — three distinct cards ─────────────────────── */
+/* Replaces the old single .game-plan-widget (grid: .gp-left dark region +
+   .gp-right light region) with three independent, self-bordered cards in a
+   row: AI Assistant (white, gold-accent border — this card now carries the
+   "visual anchor" signal .game-plan-widget's own gold top border used to
+   carry), Daily plan (white, plain sentence-case label), and the
+   weekly-load/next-due card (its own card now instead of a bare region; the
+   check-in slot that used to lead it was removed with the daily check-in).
+   Pure visual/structural split — see gp_loadGamePlan() in hub-tabs.js, which
+   still only ever touches the ids inside these cards via getElementById,
+   never their containers. */
+.gp-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  align-items: stretch;
+}
+.gp-card {
+  background: var(--sp-paper);
+  border: var(--sp-border);
+  border-radius: var(--sp-card-radius);
+  box-shadow: var(--sp-shadow);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.gp-card-assistant { flex: 1.2; border-top: 4px solid var(--sp-blue); }
+.gp-card-checklist { flex: 1; }
+.gp-card-stats      { flex: 0.8; }
+.gp-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.gp-card-icon {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.gp-card-icon img { width: 100%; height: 100%; object-fit: contain; border-radius: 3px; }
+.gp-card-title {
+  font-family: var(--sp-font-label);
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #C85A2E;
+  flex: 1;
+}
+.gp-card-header-plain { justify-content: space-between; }
+.gp-card-title-plain {
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--sp-ink);
+}
+.gp-refresh-btn {
+  background: none;
+  border: none;
+  color: var(--sp-muted);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+.gp-refresh-btn:hover { color: #C85A2E; }
+.gp-loading {
+  font-family: var(--sp-font-label);
+  font-size: 11px;
+  color: var(--sp-muted);
+  letter-spacing: 0.05em;
+}
+.gp-voice {
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  line-height: 1.6;
+  color: var(--sp-ink);
+}
+.gp-voice p { margin: 0; }
+.gp-voice strong { color: #C85A2E; font-weight: 600; }
+.gp-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.gp-task {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.gp-task-num {
+  font-family: var(--sp-font-label);
+  font-size: 10px;
+  color: var(--sp-muted);
+  min-width: 18px;
+  margin-top: 3px;
+}
+.gp-task-body { flex: 1; }
+.gp-task-text {
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  color: var(--sp-ink);
+  line-height: 1.4;
+}
+/* Urgency tag — same classes/colors as before, now a purely informational
+   pill next to the task text instead of the clickable element itself (that
+   role moved to .gp-task-check below). Self-contained dark chips, so they
+   read fine sitting on the new white card without any color changes. */
+.gp-task-tag {
+  display: inline-block;
+  font-family: var(--sp-font-label);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  margin-top: 4px;
+  border-radius: 2px;
+}
+.gp-tag-now     { background: #3B1A1A; color: #E88; }
+.gp-tag-today   { background: #1A2A1A; color: #8C8; }
+.gp-tag-before  { background: #1A1A2A; color: #88C; }
+.gp-tag-travel  { background: #2A1A00; color: #C96; }
+.gp-tag-tonight { background: var(--sp-ink); color: var(--sp-paper); border: 0.5px solid rgba(255,255,255,.3); }
+.gp-tag-week    { background: var(--sp-ink); color: var(--sp-paper); border: 0.5px solid rgba(255,255,255,.3); }
+
+/* Checkbox-styled click target — the ::before glyph is a CSS pseudo-element,
+   not a DOM child, so it survives untouched when gp_completeTask()'s
+   existing JS sets this element's textContent to "Marking…"/"Tap to retry"
+   during/after the request (unchanged logic — see hub-tabs.js). Any such
+   status text simply renders after the glyph. */
+.gp-task-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--sp-font-label);
+  font-size: 9px;
+  color: var(--sp-muted);
+  margin-top: 4px;
+}
+.gp-task-check::before {
+  content: '';
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border: 1.5px solid var(--sp-ink);
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.gp-task-check-disabled { color: var(--sp-muted); cursor: default; }
+.gp-task-check-disabled::before { border-color: var(--sp-ink); }
+/* Completed state — the checked box + "Done" + undo link, same three-part
+   structure and same sole clickable element (the undo link) as before this
+   restyle; only the "Done ✓" text badge became a checked-box glyph. */
+.gp-task-check-done::before {
+  content: '✓';
+  background: #C85A2E;
+  border-color: #C85A2E;
+  color: var(--sp-paper);
+  font-size: 9px;
+  line-height: 13px;
+  text-align: center;
+}
+.gp-conflict-bar {
+  background: var(--sp-coral-tint);
+  border: 2px dashed var(--sp-ink);
+  border-radius: var(--sp-warn-radius);
+  color: var(--sp-ink);
+  font-family: var(--sp-font-label);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  padding: 8px 12px;
+}
+/* (.gp-checkin-card / .gp-checkin-msg / .gp-checkin-link were removed with the
+   daily check-in — the card that used to lead this panel is gone.) */
+.gp-week-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.gp-week-label,
+.gp-canvas-label {
+  font-family: var(--sp-font-label);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sp-muted);
+}
+.gp-week-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  min-height: 40px;
+}
+.gp-wb {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  justify-content: flex-end;
+}
+.gp-wb-count {
+  font-family: var(--sp-font-label);
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--sp-muted);
+  line-height: 1;
+}
+.gp-wb-day {
+  font-family: var(--sp-font-label);
+  font-size: 7px;
+  color: var(--sp-muted);
+  text-transform: uppercase;
+}
+.gp-wb-day.gp-today { color: var(--sp-ink); font-weight: 700; }
+.gp-week-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(20,20,26,.12);
+  margin-top: 4px;
+}
+.gp-key-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.gp-key-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.gp-key-label {
+  font-family: var(--sp-font-label);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sp-muted);
+}
+.gp-bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  gap: 3px;
+  height: 100%;
+  justify-content: flex-end;
+}
+.gp-bar {
+  width: 100%;
+  background: var(--sp-ink);
+  min-height: 2px;
+  transition: height 0.3s ease;
+}
+.gp-bar.today-bar { background: var(--sp-blue); }
+.gp-bar-day {
+  font-family: var(--sp-font-label);
+  font-size: 7px;
+  color: var(--sp-muted);
+  text-transform: uppercase;
+}
+.gp-bar-day.today-label { color: var(--sp-ink); font-weight: 700; }
+.gp-canvas-section { flex: 1; overflow: hidden; }
+.gp-canvas-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+.gp-canvas-item {
+  border-left: 2px solid var(--sp-ink);
+  padding-left: 8px;
+}
+.gp-canvas-item-title {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  color: var(--sp-ink);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gp-canvas-item-due {
+  font-family: var(--sp-font-label);
+  font-size: 9px;
+  color: var(--sp-muted);
+  margin-top: 2px;
+}
+.gp-canvas-empty {
+  font-family: var(--sp-font-label);
+  font-size: 10px;
+  color: var(--sp-muted);
+  margin-top: 6px;
+}
+/* Task link and duration — colors overridden inline per-task by
+   hub-tabs.js's gp_loadGamePlan() (completed vs. not); these are just the
+   base/fallback values now that the card is white instead of navy. */
+.gp-task-link {
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  color: var(--sp-ink);
+  text-decoration: none;
+  line-height: 1.4;
+  display: inline;
+  transition: color 0.15s;
+}
+.gp-task-text-plain {
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  color: var(--sp-ink);
+  line-height: 1.4;
+}
+.gp-task-dur {
+  font-family: var(--sp-font-label);
+  font-size: 9px;
+  color: var(--sp-muted);
+  white-space: nowrap;
+  align-self: flex-start;
+  margin-top: 3px;
+  padding-left: 6px;
+}
+
+/* Canvas list rows */
+.gp-canvas-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 8px;
+  border-left: 2px solid var(--sp-ink);
+}
+.gp-cr-course {
+  font-family: var(--sp-font-label);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sp-muted);
+}
+.gp-cr-title {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  color: var(--sp-ink);
+  text-decoration: none;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  transition: color 0.15s;
+}
+.gp-cr-due {
+  font-family: var(--sp-font-label);
+  font-size: 9px;
+  color: var(--sp-muted);
+}
+.gp-cr-due.gp-urgent { color: #E88; font-weight: 700; }
+.gp-cr-due.gp-conflict-due { color: #C96; font-weight: 700; }
+
+@media (max-width: 900px) {
+  /* Three independent bordered cards (not grid regions sharing one shared
+     box the way .gp-left/.gp-right used to), so stacking them is just a
+     direction flip — no compensating border swap needed the way the old
+     .gp-right rule required. */
+  .gp-row { flex-direction: column; }
+}
+
+@media (max-width: 767px) {
+  .growth-page { padding: 12px; }
+  .growth-section-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .growth-add-btn { width: 100%; text-align: center; }
+  .growth-save-bar { padding: 12px 0; }
+}
+
+/* ── Mentor belief placeholder (Today ORDER 1) ───────────────────────── */
+.mentor-belief-placeholder {
+  background: var(--sp-tint);
+  border-left: 3px solid var(--sp-ink);
+  padding: 12px 16px;
+  margin-bottom: 0;
+}
+.mbp-label {
+  font-family: var(--sp-font-label);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sp-muted);
+  margin-bottom: 4px;
+}
+.mbp-text {
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  color: var(--sp-muted);
+  line-height: 1.5;
+}
+
+/* ── Mentor belief card — loaded state ─────────────────────────────────
+   The mentor's weekly message — "yellow for mentor messages" featured card
+   per the Sticker Pop system. */
+.mentor-belief-card {
+  background: var(--sp-yellow);
+  border: var(--sp-border);
+  border-radius: var(--sp-card-radius);
+  box-shadow: var(--sp-shadow);
+  padding: 16px;
+}
+.mbc-from {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.mbc-avatar {
+  width: 22px;
+  height: 22px;
+  background: var(--sp-ink);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--sp-font-label);
+  font-size: 7px;
+  font-weight: 700;
+  color: var(--sp-paper);
+  flex-shrink: 0;
+}
+.mbc-label {
+  font-family: var(--sp-font-label);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sp-ink);
+}
+.mbc-text {
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  font-weight: 400;
+  color: var(--sp-ink);
+  line-height: 1.6;
+  font-style: italic;
+}
+.mbc-meta {
+  font-family: var(--sp-font-label);
+  font-size: 9px;
+  color: var(--sp-ink);
+  opacity: .7;
+  letter-spacing: 0.06em;
+  margin-top: 6px;
+}
+
+/* (.progress-statement / .ps-dot / .ps-text were removed with the daily
+   check-in — the Today "progress statement" line it styled was check-in
+   framed and no longer renders.) */
+
+/* ── Canvas progress bar ─────────────────────────────────────────────── */
+.canvas-progress-bar {
+  position: relative;
+  background: var(--sp-tint);
+  height: 28px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+.cpb-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: var(--sp-blue);
+  opacity: 0.25;
+  transition: width 0.4s ease;
+}
+.cpb-text {
+  font-family: var(--sp-font-label);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sp-ink);
+  position: relative;
+  z-index: 1;
+}
+
+/* (The login "session opening card" overlay — .session-card* / .sc-* — was
+   removed with the daily check-in; it was gated on a completed check-in and
+   celebrated the check-in streak.) */
+
+
+/* ── My events (student's own sport schedule) — People/Team tab ─────────── */
+.htv-my-events { margin-top: 14px; }
+.htv-my-events:first-child { margin-top: 0; }
+.htv-my-events-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 8px;
+  flex-wrap: wrap;
+}
+.htv-my-events-label {
+  font-family: var(--sp-font-label);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sp-muted);
+}
+.htv-my-add-btn {
+  padding: 10px 16px;
+  min-height: 44px;
+  border: 2px solid var(--sp-ink);
+  border-radius: var(--sp-pill-radius);
+  background: var(--sp-ink);
+  color: var(--sp-paper);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity .15s;
+}
+.htv-my-add-btn:hover { opacity: .88; }
+.htv-my-item .htv-soccer-type { text-transform: none; }
+
+.my-days { display: flex; flex-wrap: wrap; gap: 6px; }
+.my-day-chip input { position: absolute; opacity: 0; pointer-events: none; }
+.my-day-chip span {
+  display: inline-block;
+  min-width: 44px;
+  min-height: 44px;
+  line-height: 28px;
+  text-align: center;
+  padding: 8px 10px;
+  border: 2px solid var(--sp-ink);
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sp-ink);
+  background: var(--sp-paper);
+  cursor: pointer;
+  user-select: none;
+}
+.my-day-chip input:checked + span { background: var(--sp-yellow); border-color: var(--sp-ink); color: var(--sp-ink); }
+.my-day-chip input:focus-visible + span { outline: 2px solid var(--sp-blue); outline-offset: 2px; }
+.my-time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.my-delete-btn { margin-right: auto; color: #c0392b; }
+#my-event-overlay .soc-edit-footer { flex-wrap: wrap; }
+
+
+/* ── My Teachers list (Team tab) ─────────────────────────────────────────── */
+.htv-teacher-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(20,20,26,.12); }
+.htv-teacher-row:last-child { border-bottom: none; }
+.htv-teacher-courses { color: var(--sp-muted); overflow-wrap: anywhere; }
+.htv-teacher-hours { font-size: 13px; color: #3a3a44; margin-top: 3px; overflow-wrap: anywhere; }
+.htv-teacher-msg {
+  flex-shrink: 0;
+  padding: 7px 12px;
+  border: 1.5px solid var(--sp-ink);
+  border-radius: 8px;
+  background: var(--sp-paper);
+  color: var(--sp-ink);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.htv-teacher-msg:hover { background: var(--sp-ink); color: var(--sp-paper); }
+.htv-teacher-group {
+  margin: 12px 0 2px;
+  font-family: var(--sp-font-label);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sp-muted);
+}
+
+
+/* ── "Connect your Slack" dialog (maybePromptSlackConnect(), app.js) ─────── */
+.slack-prompt-modal { max-width: 420px; }
+.slack-prompt-lead { font-size: 16px; font-weight: 600; color: var(--sp-ink); margin: 0 0 10px; line-height: 1.4; }
+.slack-prompt-list { margin: 0 0 12px; padding-left: 20px; font-size: 14px; line-height: 1.55; color: var(--sp-muted); }
+.slack-prompt-list li { margin-bottom: 4px; }
+.slack-prompt-foot { margin: 0; font-size: 12.5px; color: var(--sp-muted); }
+.slack-prompt-modal .soc-edit-cancel-btn { color: var(--sp-muted); border-color: var(--sp-ink); background: var(--sp-paper); }
+.slack-prompt-modal .soc-edit-cancel-btn:hover { background: var(--sp-tint); }
+
+.mc-msg-bubble a, .htv-mentor-bubble-text a { text-decoration: underline; }
+.mc-msg-bubble code { font-family: var(--sp-font-label); font-size: .9em; background: rgba(0,0,0,.12); padding: 0 3px; border-radius: 3px; }
+.mentor-quote { display: inline-block; border-left: 3px solid rgba(0,0,0,.25); padding-left: 8px; }
+
+/* ── Other courses (APEX etc.) — outside-Canvas work list ─────────────── */
+.htv-ow-lead { font-size: 13px; color: var(--sp-muted); margin: 0 0 8px; }
+.htv-ow-form { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.htv-ow-form input { flex: 1 1 150px; min-width: 0; padding: 8px 10px; border: 1px solid rgba(20,20,26,.2); border-radius: 8px; font: inherit; font-size: 14px; background: #fff; }
+.htv-ow-form input[type="date"] { flex: 0 1 160px; }
+.htv-ow-form button { padding: 8px 16px; border-radius: 8px; border: 2px solid #14141a; background: #14141a; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+.htv-ow-msg { font-size: 13px; color: #8e2a1f; margin: 0 0 6px; }
+.htv-ow-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(20,20,26,.12); }
+.htv-ow-row:last-child { border-bottom: none; }
+.htv-ow-row.is-done .htv-person-name { text-decoration: line-through; color: var(--sp-muted); }
+.htv-ow-check input { width: 18px; height: 18px; cursor: pointer; }
+.htv-ow-del { margin-left: auto; border: none; background: transparent; cursor: pointer; font-size: 14px; color: var(--sp-muted); padding: 4px 8px; }
+.htv-ow-late { color: #b3261e; font-weight: 600; }

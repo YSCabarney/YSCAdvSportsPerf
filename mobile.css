@@ -1,0 +1,736 @@
+html { font-size: 112%; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   YSC Student Hub — Mobile & Responsive Styles
+   Breakpoints: mobile ≤767px  tablet 768–1024px  desktop ≥1025px
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GLOBAL TOUCH & IOS/ANDROID FIXES (apply on all breakpoints)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Prevent iOS bounce scroll — keeps the hub feeling like a native app */
+html, body {
+  overscroll-behavior: none;
+}
+
+/* Add safe-area to <html> so env() works everywhere */
+html {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Remove 300ms tap delay on Android and Chrome */
+a, button, input, select, textarea, label, [role="button"], [tabindex] {
+  touch-action: manipulation;
+}
+
+/* Remove iOS/Safari default button styling */
+button, input[type="submit"], input[type="button"], input[type="reset"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+/* Prevent text selection on UI elements */
+button, .mob-nav-btn, .mob-drawer-item, .classic-nav-btn {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Remove default tap highlight globally (set per-element where needed) */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Floating buttons stay laid-out (display:flex, below) but invisible and
+   untappable until the user has scrolled down a bit — see .mob-scrolled-
+   past-top toggle in mobile.js. Confirmed live on a real iPhone: content
+   pinned to the top of a mobile pane (Mentor Chat's collapsed toggle via
+   order:-1, or just whatever's first that day — Soccer Schedule in the
+   confirmed repro) can land directly under these fixed buttons at natural,
+   unscrolled rest. Reserving bottom padding only protects the *end* of a
+   scrollable list, not the top, so that approach (tried first) didn't
+   actually fix this — hiding the buttons near the top is what does. */
+/* Redundant (and, live-tested, visually overlapping the input row/offline
+   notice) while already on the Mentor Chat tab itself — see setMobActive()
+   in mobile.js. */
+body.mob-on-mentor-tab .mob-mentor-float-btn { display: none !important; }
+/* Team tab: isElementScrolled() in mobile.js treats a pane that fits on
+   screen without scrolling as "already scrolled", so this button can appear
+   immediately rather than only after a scroll — and the My Support Team
+   card's avatar column sits at the same left edge. CSS-only fix (no JS
+   touched): hide it specifically while the People/Team tab is active, same
+   as the existing Mentor Chat exclusion above, via :has() instead of a
+   body class since nothing sets one for this tab. */
+body:has(.htv-tab[data-tab="people"].htv-active) .mob-mentor-float-btn { display: none !important; }
+
+.mob-mentor-float-btn {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .15s ease;
+}
+body.mob-scrolled-past-top .mob-mentor-float-btn {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* ── Floating Mentor Chat Button (mobile only — mirrors AI chat button) ──
+   Same fixed-position pattern, opposite corner (left vs right) so both are
+   reachable without overlapping. Gold accent (matches Mentor Chat's own
+   column styling) + a person icon vs. the AI button's black chat-bubble,
+   so the two are never confused for each other. */
+.mob-mentor-float-btn {
+  display: none; /* shown via mobile media query */
+  position: fixed;
+  /* Floating ink-pill bottom nav now sits 16px off the screen edge and is
+     taller (6px padding + 52px inner + borders ≈ 84px to its top edge, was
+     59px flush) — this button's own bottom offset moves out by the same
+     amount (74px -> 100px) to keep clearing it by the same ~15px gap.
+     Raised again to 180px: on Home, this button was appearing immediately
+     (isElementScrolled() in mobile.js treats a non-scrolling pane as
+     "already scrolled") right over the #chat-input row — reserved space
+     for the row is #htv-home's own 84px pane padding plus the row's own
+     ~70-80px height, so 180px clears both with room to spare. */
+  bottom: calc(180px + env(safe-area-inset-bottom, 0px));
+  left: 16px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--sp-yellow);
+  color: var(--sp-ink);
+  border: var(--sp-border);
+  box-shadow: var(--sp-shadow);
+  align-items: center;
+  justify-content: center;
+  z-index: 490;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .12s;
+}
+.mob-mentor-float-btn svg { display: block; pointer-events: none; }
+.mob-mentor-float-btn:active {
+  transform: scale(0.91);
+}
+/* Hide on tablet and desktop */
+@media (min-width: 768px) {
+  .mob-mentor-float-btn { display: none !important; }
+}
+
+/* ── Reduce motion for battery and accessibility ─────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+/* ── Mobile hamburger button (hidden on desktop) ────────────────────────── */
+.mobile-hamburger {
+  display: none;
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  color: var(--sp-ink);
+  border-radius: 6px;
+  transition: background .15s;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.mobile-hamburger:hover { background: rgba(16,27,51,.06); }
+.mobile-hamburger svg { display: block; }
+
+/* ── Mobile bottom nav (hidden on desktop) ──────────────────────────────── */
+/* Sticker Pop: a floating ink pill, 16px off the screen edges and the home-bar
+   safe area, rather than a flush full-width bar. */
+#mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  left: 16px;
+  right: 16px;
+  z-index: 500;
+  background: var(--sp-ink);
+  border: var(--sp-border);
+  border-radius: 28px;
+  box-shadow: var(--sp-shadow);
+  padding: 6px;
+}
+
+.mob-nav-inner {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  height: 52px;
+}
+
+.mob-nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: none;
+  border: none;
+  border-radius: 22px;
+  cursor: pointer;
+  padding: 6px 2px;
+  min-height: 44px;
+  color: rgba(255,255,255,.6);
+  -webkit-tap-highlight-color: transparent;
+  min-width: 44px;
+  max-width: 100%;
+  overflow: hidden;
+  transition: background .15s, color .15s;
+  position: relative;
+}
+.mob-nav-btn:active { background: rgba(255,255,255,.1); }
+/* Active item: its own yellow pill, ink text/icon — not just a colored label */
+.mob-nav-btn.mob-active { background: var(--sp-yellow); color: var(--sp-ink); }
+.mob-nav-icon { font-size: 1.2rem; line-height: 1; }
+.mob-nav-label {
+  font-family: var(--sp-font-label);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ── Mobile slide-out drawer ────────────────────────────────────────────── */
+#mobile-drawer-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 800;
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+#mobile-drawer-overlay.mob-drawer-open { opacity: 1; }
+
+#mobile-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 280px;
+  max-width: 85vw;
+  background: var(--sp-paper);
+  z-index: 801;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -4px 0 24px rgba(0,0,0,.22);
+  transform: translateX(100%);
+  transition: transform .28s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+#mobile-drawer.mob-drawer-open { transform: translateX(0); }
+
+.mob-drawer-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 16px 14px;
+  background: var(--sp-ink);
+  color: var(--sp-paper);
+  flex-shrink: 0;
+}
+.mob-drawer-logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  object-fit: contain;
+  background: var(--sp-paper);
+}
+.mob-drawer-title {
+  flex: 1;
+  font-size: .92rem;
+  font-weight: 700;
+  letter-spacing: -.01em;
+}
+.mob-drawer-close {
+  background: rgba(255,255,255,.15);
+  border: none;
+  color: var(--sp-paper);
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mob-drawer-section-label {
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--sp-muted);
+  padding: 14px 16px 6px;
+}
+
+.mob-drawer-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: .88rem;
+  font-weight: 600;
+  color: var(--sp-ink);
+  text-align: left;
+  border-bottom: 1px solid var(--sp-ink);
+  -webkit-tap-highlight-color: transparent;
+  transition: background .12s;
+  font-family: inherit;
+}
+.mob-drawer-item:active { background: rgba(16,27,51,.04); }
+.mob-drawer-item:last-child { border-bottom: none; }
+.mob-drawer-item-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 1.1rem;
+}
+
+.mob-drawer-divider {
+  height: 1px;
+  background: var(--sp-tint);
+  margin: 8px 0;
+}
+
+.mob-drawer-utility-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+}
+.mob-drawer-util-btn {
+  flex: 1;
+  padding: 11px 8px;
+  background: var(--sp-paper);
+  border: 1.5px solid var(--sp-ink);
+  border-radius: 10px;
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--sp-ink);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background .12s;
+  -webkit-tap-highlight-color: transparent;
+}
+.mob-drawer-util-btn:active { background: var(--sp-tint); }
+.mob-drawer-util-btn .ti { font-size: 14px; vertical-align: -2px; margin-right: 2px; }
+
+.mob-drawer-signout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: calc(100% - 32px);
+  margin: 4px 16px 16px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1.5px solid #fecaca;
+  background: #fff5f5;
+  color: #dc2626;
+  font-size: .88rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .12s;
+}
+.mob-drawer-signout-btn:active { background: #fee2e2; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE BREAKPOINT: ≤767px
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+
+  /* ── Header ─────────────────────────────────────────────────────────── */
+  .mobile-hamburger { display: flex; align-items: center; }
+
+  /* Hide desktop header controls */
+  .report-issue-btn,
+  .help-header-btn,
+  .settings-gear-btn,
+  .timer-header-btn { display: none !important; }
+
+  /* Slim header brand */
+  .brand-name { font-size: .85rem; }
+  .brand-logo { width: 28px; height: 28px; }
+
+  /* ── App layout ──────────────────────────────────────────────────────── */
+  .classic-sidebar { display: none !important; }
+
+  .app-body {
+    height: calc(100dvh - var(--header-h));
+    overflow: hidden;
+  }
+
+  .app-main { overflow: hidden; }
+
+  /* ── Bottom nav ──────────────────────────────────────────────────────── */
+  #mobile-bottom-nav { display: block; }
+
+  /* ── Hub tab view ────────────────────────────────────────────────────── */
+  .htv-nav { display: none; } /* replaced by bottom nav */
+
+  #hub-tab-view {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* Panes scroll and leave room for the bottom nav AND the floating AI
+     Chat / Mentor Chat buttons (.mob-chat-float-btn / .mob-mentor-float-btn,
+     both fixed-position, bottom:180px, 56px tall — raised from 100px so
+     the button clears #htv-home's own chat-input row too, see
+     .mob-mentor-float-btn in this file). 248px = 180 + 56 + 12px breathing
+     room (matches the BREATHING_ROOM constant used for the same kind of
+     clearance math in mobile.js's scroll-to-mentor-chat handler). */
+  .htv-pane {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: calc(248px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Home (AI chat) is a full-height, non-scrolling flex pane — hub-tabs.css's
+     `#htv-home.htv-pane-active { padding: 0 }` outranks the .htv-pane rule above, so the pane ran
+     under the fixed bottom nav and the chat input row + Send button sat behind it (measured at
+     375x812: textarea 736-798px vs nav top 753px — only the top 17px was visible/tappable).
+     Reserve the floating nav's real footprint from the screen edge (16px gap + 6px padding +
+     52px inner + 4px border ≈ 84px, was 59px when the nav sat flush). Same reasoning as
+     .htv-mentor-input-area in hub-tabs.css. */
+  #htv-home.htv-pane-active {
+    padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* ── Hub cards ───────────────────────────────────────────────────────── */
+  .htv-card {
+    margin: 8px 10px;
+    border-radius: 12px;
+  }
+
+  /* ── Classic panel area (Canvas, Slack, etc.) ──────────────────────── */
+  #classicPanelArea {
+    position: fixed !important;
+    inset: var(--header-h) 0 0 0 !important;
+    z-index: 300;
+    background: var(--bg, var(--sp-paper));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+
+  #classicPanelArea .panel {
+    position: relative !important;
+    top: auto !important; right: auto !important;
+    bottom: auto !important; left: auto !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    border-radius: 12px !important;
+    margin: 10px;
+    height: auto !important;
+    min-height: calc(100dvh - 120px);
+  }
+
+  /* Only show the active panel — the root cause of "Drive opens Canvas":
+     without this, ALL panels are opacity:1 stacked vertically and Canvas
+     appears first because it's first in DOM order. */
+  #classicPanelArea .panel:not(.classic-active) {
+    display: none !important;
+  }
+
+  /* Back button bar: full width, visible */
+  #back-to-today-bar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--sp-paper);
+    border-bottom: 1px solid var(--sp-ink);
+    padding: 10px 14px;
+  }
+
+  #back-to-today-btn {
+    font-size: .85rem;
+    padding: 8px 16px;
+  }
+
+  /* ── Show floating Mentor Chat button ───────────────────────────────── */
+  .mob-mentor-float-btn { display: flex; }
+
+  /* ── Header: hide student name pill on mobile (avatar-only saves space) */
+  .header-student-name { display: none !important; }
+  .profile-menu-trigger {
+    padding: 0 !important;
+    width: 34px !important;
+    border-radius: 50% !important;
+    gap: 0 !important;
+  }
+
+  /* ── Touch targets ───────────────────────────────────────────────────── */
+  input, select, textarea {
+    font-size: 16px !important; /* prevents iOS auto-zoom */
+  }
+
+  button, a {
+    min-height: 44px;
+  }
+
+  /* Override for small decorative buttons */
+  .refresh-btn, .modal-close-btn, .back-btn,
+  .zoom-del-btn, .zoom-edit-btn,
+  .htv-goal-del, .htv-dismiss-btn,
+  .notif-dropdown-close {
+    min-height: unset;
+  }
+
+  /* ── Task checkboxes ─────────────────────────────────────────────────── */
+  .htv-task-check {
+    width: 24px !important;
+    height: 24px !important;
+    border-radius: 6px !important;
+    flex-shrink: 0;
+  }
+
+  /* ── Person items ────────────────────────────────────────────────────── */
+  .htv-person-item { padding: 16px 0; }
+  .htv-avatar { width: 52px !important; height: 52px !important; font-size: 1.2rem !important; }
+
+  .htv-msg-btn {
+    padding: 9px 16px !important;
+    font-size: .84rem !important;
+    min-height: 40px;
+  }
+
+  /* ── Goal items ──────────────────────────────────────────────────────── */
+  .htv-goal-item { padding: 12px 14px !important; font-size: .96rem !important; }
+  .htv-goal-input { font-size: 16px !important; height: 44px; }
+  .htv-goal-add-btn { height: 44px; padding: 0 18px !important; }
+
+  /* ── Today tab ───────────────────────────────────────────────────────── */
+  .htv-task-item { padding: 10px 4px !important; }
+  .htv-needs-item { padding: 14px 16px !important; }
+  .htv-soccer-item { padding: 10px 14px !important; }
+
+  /* ── Meetings tab ────────────────────────────────────────────────────── */
+  .meetings-platform-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .meetings-platform-card {
+    width: 100% !important;
+    padding: 18px !important;
+  }
+  .zoom-action-bar {
+    flex-direction: column;
+  }
+  .zoom-action-divider { display: none; }
+  .zoom-action-card { width: 100%; }
+  .zoom-action-btn { width: 100%; padding: 14px !important; font-size: 1rem !important; }
+
+  /* ── Slack panels ────────────────────────────────────────────────────── */
+  .slack-layout { flex-direction: column; }
+  .slack-sidebar { height: auto; max-height: 200px; border-right: none; border-bottom: 1px solid var(--border); }
+
+  /* ── Settings panel ──────────────────────────────────────────────────── */
+  .settings-drawer {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 0 !important;
+    height: 100%;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    border-radius: 20px 20px 0 0 !important;
+  }
+  .settings-backdrop { display: none; }
+
+  /* ── Modals ──────────────────────────────────────────────────────────── */
+  .modal {
+    width: 95vw !important;
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: 16px;
+  }
+  .modal-input { font-size: 16px !important; }
+
+  /* ── Zoom section in meetings ────────────────────────────────────────── */
+  .zoom-join-row { flex-direction: column; gap: 8px; }
+  .zoom-join-input { font-size: 16px !important; }
+
+  /* ── Swipe hint (brief visual cue) ──────────────────────────────────── */
+  .mob-swipe-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: .7rem;
+    color: var(--sp-muted);
+    padding: 2px 0 6px;
+    user-select: none;
+  }
+
+  /* ── Notification dropdown ───────────────────────────────────────────── */
+  .notif-dropdown {
+    position: fixed !important;
+    inset: auto 8px 72px 8px !important;
+    max-height: 70vh;
+    overflow-y: auto;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,.2) !important;
+  }
+
+  /* ── Profile dropdown ────────────────────────────────────────────────── */
+  .profile-dropdown {
+    position: fixed !important;
+    top: auto !important; left: 8px !important; right: 8px !important;
+    bottom: 72px !important;
+    max-height: 70vh;
+    overflow-y: auto;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,.2) !important;
+  }
+
+  /* ── Timer float panel ───────────────────────────────────────────────── */
+  #timer-float-panel {
+    position: fixed !important;
+    inset: auto 8px 72px 8px !important;
+    border-radius: 16px !important;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  /* ── Today tab: soccer items minimum tap height ──────────────────────── */
+  .htv-soccer-item { min-height: 52px; padding: 12px 14px !important; }
+
+  /* ── Study schedule blocks: bigger start buttons ─────────────────────── */
+  .htv-schedule-block { padding: 12px 12px !important; }
+  .htv-schedule-focus-btn { padding: 10px 14px !important; font-size: .85rem !important; }
+
+  /* ── Focus mode button on tasks: easier to tap ───────────────────────── */
+  .htv-focus-btn { padding: 8px 12px !important; min-height: unset; }
+
+  /* ── People tab: full-width action buttons stacked ───────────────────── */
+  .htv-person-actions { flex-direction: column; width: 100%; }
+  .htv-msg-btn {
+    width: 100% !important;
+    justify-content: center;
+  }
+
+  /* ── Calendar: ensure full-width ─────────────────────────────────────── */
+  .panel-calendar .cal-grid { grid-template-columns: repeat(7, 1fr) !important; }
+  .panel-calendar .cal-day { min-height: 48px !important; }
+  .panel-calendar .cal-day-num { font-size: 1rem !important; }
+
+  /* ── Canvas panel: assignment items taller ───────────────────────────── */
+  .assignment-item, .canvas-section li { min-height: 56px; padding: 12px 0 !important; }
+
+  /* ── Drive panel: file items taller ─────────────────────────────────── */
+  .drive-file-item { min-height: 56px !important; padding: 12px 0 !important; }
+
+  /* ── Google Drive file icon ──────────────────────────────────────────── */
+  .drive-file-icon { width: 40px; height: 40px; font-size: 1.4rem; }
+
+  /* ── Slack panel: full-height with keyboard awareness ───────────────── */
+  .panel-slack { height: 100%; }
+  .slack-composer { position: sticky; bottom: 0; background: var(--sp-paper); padding: 8px 12px; }
+  .slack-msg-input { font-size: 16px !important; }
+
+  /* (Check-in gate mobile rules removed — the daily check-in moved to the
+     standalone YSC Check-in app.) */
+
+  /* ── Sign-out confirm: don't cover bottom nav ────────────────────────── */
+  .signout-confirm-overlay { align-items: flex-start; padding-top: 20vh; }
+
+  /* ── Meetings: Zoom join input full-width ────────────────────────────── */
+  .zoom-join-input { font-size: 16px !important; min-height: 48px; }
+
+  /* ── Active state touch feedback on all interactive elements ─────────── */
+  .htv-task-item:active,
+  .htv-person-item:active,
+  .htv-soccer-item:active,
+  .htv-schedule-block:active { opacity: 0.75; }
+
+  .mob-nav-btn:active,
+  .mob-drawer-item:active,
+  .classic-nav-btn:active { transform: scale(0.96); }
+}
+
+/* ── Soccer popup: mobile bottom-sheet ──────────────────────────────────── */
+@media (max-width: 767px) {
+  .soc-popup-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .soc-popup-card {
+    border-radius: 20px 20px 0 0;
+    max-height: 92vh;
+    width: 100%;
+    max-width: 100%;
+    transform: translateY(100%);
+    box-shadow: 0 -8px 32px rgba(0,0,0,.18);
+  }
+  .soc-popup-overlay.soc-popup-open .soc-popup-card {
+    transform: translateY(0);
+  }
+  .soc-popup-header {
+    border-radius: 20px 20px 0 0;
+    padding: 10px 18px 14px;
+  }
+  .soc-popup-header::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 4px;
+    background: rgba(255,255,255,.4);
+    border-radius: 2px;
+    margin: 0 auto 12px;
+  }
+  .soc-popup-body { padding: 16px 18px 32px; }
+  .soc-popup-notes-input { font-size: 16px !important; }
+  .soc-popup-actions { flex-direction: column; }
+  .soc-popup-cal-btn,
+  .soc-popup-save-btn { padding: 14px; font-size: .92rem; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TABLET BREAKPOINT: 768px–1024px
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .classic-sidebar { width: 62px; }
+  .htv-card { margin: 6px 10px; }
+
+  /* Slightly larger tap targets */
+  .htv-task-check { width: 22px !important; height: 22px !important; }
+  .htv-msg-btn { padding: 7px 14px !important; }
+}
+
+
+/* The Team tab carries the student's first name ("Katherine's Team") — keep a
+   long name (or, for a test account with no name on file, the full email —
+   see applyTeamTabName() in hub-tabs.js) from widening its slot in the
+   5-item bottom nav. 56px, not the button's own ~67px flex share, so the
+   label can never reach the button's edge regardless of exactly how the
+   5 items split the available width; .mob-nav-btn's own overflow:hidden
+   above is the hard backstop either way. */
+.mob-nav-btn[data-tab="people"] .mob-nav-label {
+  display: block;
+  max-width: 56px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

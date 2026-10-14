@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="../mock.js" data-role="teacher"></script>
+<script src="../mock-data.js"></script>
+<script src="../mock-teacher.js"></script>
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YSC Academy — Teacher Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@800&family=DM+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../vendor/tabler/tabler-icons.min.css" />
+  <link rel="stylesheet" href="../theme.css" />
+  <link rel="stylesheet" href="../teacher/teacher.css" />
+  <link rel="stylesheet" href="../teacher/teacher-huddles.css" />
+</head>
+<body>
+
+<!-- ── Topbar ──────────────────────────────────────────────────────────── -->
+<header class="th-topbar">
+  <div class="th-topbar-left">
+    <div class="th-cube">YSC</div>
+    <span class="th-wordmark">ACADEMY — TEACHER HUB</span>
+  </div>
+  <div class="th-topbar-right">
+    <div id="teacher-identity" style="display:none">
+      Signed in as <strong id="teacher-identity-name"></strong>
+    </div>
+    <span class="th-date" id="th-date"></span>
+    <div id="live-indicator" class="live-indicator">
+      <span class="live-dot"></span> Live
+    </div>
+    <button class="avail-cycle-btn" id="avail-cycle-btn" title="Click to change your availability status">
+      <span class="avail-dot-sm" id="avail-dot-sm"></span>
+      <span id="avail-text-sm">Status</span>
+    </button>
+    <a id="admin-portal-link" href="../admin/index.html" style="display:none" class="th-admin-link"><i class="ti ti-settings" aria-hidden="true"></i> Admin</a>
+    <!-- Personal quick-access link (e.g. Cidi Labs Observ Ed) — hidden until
+         the teacher has saved one in Settings → Quick Links. Opens in a new
+         tab since Canvas/LTI content generally blocks being framed inline. -->
+    <a id="observed-quicklink-btn" href="#" target="_blank" rel="noopener" style="display:none" class="th-admin-link" title="Open your Observ Ed course"><i class="ti ti-chart-bar" aria-hidden="true"></i> Observ Ed</a>
+    <form method="POST" action="/teacher/logout" style="margin:0">
+      <button type="submit" class="th-signout-btn">Sign Out</button>
+    </form>
+  </div>
+</header>
+
+<!-- ── Original Tab Bar (hidden — badge span IDs kept for JS compat) ──── -->
+<nav class="th-tabbar" style="display:none" aria-hidden="true">
+  <button class="th-tab active" data-panel="students">Student Monitor</button>
+  <button class="th-tab" data-panel="chatlog">Chat Log</button>
+  <button class="th-tab" data-panel="broadcast">Broadcast</button>
+  <button class="th-tab" data-panel="roster">Class Roster</button>
+  <button class="th-tab" data-panel="websites">Website Tracker</button>
+  <button class="th-tab" data-panel="prompts">Prompt Inventory</button>
+  <button class="th-tab" data-panel="analytics">Analytics</button>
+  <button class="th-tab" data-panel="people">Support Team</button>
+  <button class="th-tab" data-panel="mentor-inbox">
+    Mentor Inbox
+    <span class="nav-badge" id="mentor-inbox-nav-badge" style="display:none">0</span>
+  </button>
+  <button class="th-tab" data-panel="zoom">Zoom Links</button>
+  <button class="th-tab" data-panel="chatbot-data">Chatbot Data</button>
+  <button class="th-tab" data-panel="student-goals">Student Goals</button>
+</nav>
+
+<!-- ── Sidebar ────────────────────────────────────────────────────────── -->
+<nav class="th-sidebar" id="th-sidebar">
+  <button class="th-sidebar-btn active" data-section="students" title="Students">
+    <i class="ti ti-users"></i>
+    <span class="th-sidebar-label">Students</span>
+  </button>
+  <button class="th-sidebar-btn" data-section="messages" title="Messages">
+    <i class="ti ti-message-dots"></i>
+    <span class="th-sidebar-label">Messages</span>
+    <span class="th-sidebar-badge" id="sidebar-badge-messages" style="display:none">0</span>
+  </button>
+  <button class="th-sidebar-btn" data-section="goals" title="Goals">
+    <i class="ti ti-target"></i>
+    <span class="th-sidebar-label">Goals</span>
+  </button>
+  <button class="th-sidebar-btn" data-section="data" title="Data">
+    <i class="ti ti-chart-bar"></i>
+    <span class="th-sidebar-label">Data</span>
+  </button>
+  <button class="th-sidebar-btn" data-section="settings" title="Settings">
+    <i class="ti ti-settings"></i>
+    <span class="th-sidebar-label">Settings</span>
+    <span class="th-sidebar-badge" id="sidebar-badge-settings" style="display:none" title="Office-hour requests waiting">0</span>
+  </button>
+</nav>
+
+<!-- ── Active Section Header — names which sidebar section the sub-nav
+     row below belongs to, since the sidebar rail and sub-nav row sit at
+     the same vertical position and were easy to mistake for two separate
+     nav systems. ────────────────────────────────────────────────────── -->
+<div class="th-section-header" id="th-section-header">
+  <i class="ti ti-users"></i>
+  <span id="th-section-header-label">Students</span>
+</div>
+
+<!-- ── Section Sub-nav ────────────────────────────────────────────────── -->
+<nav class="th-subnav" id="th-subnav"></nav>
+
+<!-- ── Main ───────────────────────────────────────────────────────────── -->
+<main class="th-main">
+
+  <!-- STUDENTS PANEL ─────────────────────────────────────────────────── -->
+  <section class="panel" id="panel-students">
+    <div class="panel-head">
+      <div>
+        <div class="panel-eyebrow">// Student Monitor</div>
+        <h1 class="panel-title">Live Student Activity</h1>
+        <p class="panel-desc">Presence refreshes every 5 seconds</p>
+        <p class="panel-desc cl-freshness">
+          Check-in status <span id="cl-updated">syncing…</span>
+          <button type="button" id="cl-refresh-btn" title="Check for new check-ins now">&#8635; Refresh</button>
+        </p>
+      </div>
+      <div class="panel-head-right">
+        <!-- Prominent home-screen copy of the topbar Observ Ed quicklink —
+             hidden until a URL is saved in Settings → Quick Links. The
+             topbar link (always-visible, every panel) stays too; this one
+             exists because the topbar link alone wasn't visible/findable
+             enough from the default landing screen. Both are kept in sync
+             by applyQuicklinkButtons() in teacher.js. -->
+        <a id="observed-quicklink-btn-home" href="#" target="_blank" rel="noopener" style="display:none" class="btn-navy" title="Open your Observ Ed course">📊 Open Observ Ed</a>
+        <button type="button" id="pulse-overview-btn" style="display:none" class="btn-navy" onclick="openPulseOverview()" title="Pulse levels across all your mentees"><i class="ti ti-chart-line" aria-hidden="true"></i> Pulse overview</button>
+        <div class="legend">
+          <span class="dot green"></span>Active
+          <span class="dot yellow"></span>Idle
+          <span class="dot grey"></span>Offline
+        </div>
+        <div class="badge-pill" id="student-count">0 students</div>
+      </div>
+    </div>
+
+    <!-- Search + filters -->
+    <div class="sc-toolbar">
+      <input class="sc-search" id="sc-search-input" placeholder="Search students..." autocomplete="off" />
+      <div class="sc-filters">
+        <button class="sc-filter-btn active" data-filter="all">All</button>
+        <button class="sc-filter-btn" data-filter="messages">Messages</button>
+      </div>
+    </div>
+
+    <!-- Card grid (populated by teacher.js) -->
+    <div id="students-table">
+      <div class="empty-state">Loading students...</div>
+    </div>
+
+    <!-- Conversation thread panel -->
+    <div class="convo-panel" id="convo-panel" style="display:none;">
+      <div class="convo-header">
+        <div class="convo-title" id="convo-title">// Conversation with Student</div>
+        <div class="convo-actions">
+          <div class="convo-close" onclick="downloadConvoTranscript('mentor', this)" title="Download your mentor conversation with this student as a text file">↓ Mentor chat</div>
+          <div class="convo-close" onclick="downloadConvoTranscript('ai', this)" title="Download this student's AI chatbot conversation as a text file">↓ AI chat</div>
+          <div class="convo-close" onclick="closeConvo()">✕ Close</div>
+        </div>
+      </div>
+      <div id="student-weekly-load" style="border-bottom:2px solid var(--sp-ink);"></div>
+      <div id="student-study-plan" style="border-bottom:2px solid var(--sp-ink);"></div>
+      <div class="convo-thread" id="convo-thread"></div>
+      <div class="convo-input-area">
+        <textarea class="convo-input" id="convo-input" placeholder="Message student..." rows="2"></textarea>
+        <button class="convo-send" onclick="sendConvoReply()">Send →</button>
+      </div>
+    </div>
+
+    <!-- Student Pulse — mentor-only gauge panel -->
+    <div class="prompt-modal" id="pulse-modal" style="display:none">
+      <div class="prompt-modal-inner pulse-modal-inner">
+        <button class="prompt-modal-close" id="pulse-modal-close" onclick="closeStudentPulse()">✕ Close</button>
+        <div class="prompt-modal-title" id="pulse-modal-title">Student Pulse</div>
+        <div id="pulse-modal-body"><div class="loading">Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- Pulse overview — all of this mentor's mentees at a glance -->
+    <div class="prompt-modal" id="pulse-overview-modal" style="display:none">
+      <div class="prompt-modal-inner pulse-overview-modal-inner">
+        <button class="prompt-modal-close" id="pulse-overview-modal-close" onclick="closePulseOverview()">✕ Close</button>
+        <div class="prompt-modal-title">Pulse overview</div>
+        <div id="pulse-overview-modal-body"><div class="loading">Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- Quick broadcast strip -->
+    <div class="sc-broadcast-strip">
+      <div class="sc-broadcast-label">// Broadcast to all students</div>
+      <input class="sc-broadcast-input" id="sc-broadcast-input" placeholder="Type a message to all students..." autocomplete="off" />
+      <button class="sc-broadcast-btn" id="sc-broadcast-btn">Send to all →</button>
+      <div id="sc-broadcast-status" class="sc-broadcast-status"></div>
+    </div>
+
+    <!-- SLACK ACTIVITY ──────────────────────────────────────────────── -->
+    <div class="teacher-section" id="slack-activity-section" style="margin-top:28px">
+      <div class="section-header" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--sp-tint);border-bottom:2px solid var(--sp-ink);">
+        <span class="col-eyebrow" style="font-family:var(--sp-font-label);font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--sp-blue);">// Slack Activity — Today</span>
+        <button onclick="loadSlackActivity()" style="font-family:var(--sp-font-label);font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;background:var(--sp-paper);border:2px solid var(--sp-ink);border-radius:100px;padding:6px 12px;color:var(--sp-ink);cursor:pointer;">↻ Refresh</button>
+      </div>
+      <div id="slack-activity-table">
+        <div style="padding:16px;font-family:var(--sp-font-body);font-size:15px;color:var(--sp-muted);">Loading Slack activity…</div>
+      </div>
+    </div>
+
+    <!-- WEBSITE BLOCKING ────────────────────────────────────────────── -->
+    <div class="teacher-section" id="website-blocking-section" style="margin-top:28px;margin-bottom:28px">
+      <div class="section-header" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--sp-tint);border-bottom:2px solid var(--sp-ink);">
+        <span class="col-eyebrow" style="font-family:var(--sp-font-label);font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--sp-blue);">// Website Blocking</span>
+        <span style="font-family:var(--sp-font-label);font-size:11px;color:var(--sp-muted);letter-spacing:0.08em;">Blocks apply to your assigned students</span>
+      </div>
+      <div style="background:var(--sp-paper);padding:14px 16px;display:flex;gap:10px;align-items:stretch;">
+        <input type="text" id="block-url-input" placeholder="Enter URL or domain (e.g. instagram.com)" style="flex:1;background:var(--sp-paper);border:2px solid var(--sp-ink);border-radius:14px;padding:10px 14px;min-height:44px;box-sizing:border-box;font-family:var(--sp-font-body);font-size:15px;color:var(--sp-ink);outline:none;" />
+        <input type="text" id="block-reason-input" placeholder="Reason (optional)" style="width:200px;background:var(--sp-paper);border:2px solid var(--sp-ink);border-radius:14px;padding:10px 14px;min-height:44px;box-sizing:border-box;font-family:var(--sp-font-body);font-size:15px;color:var(--sp-ink);outline:none;" />
+        <button onclick="blockSite()" style="background:var(--sp-ink);border:2px solid var(--sp-ink);border-radius:22px;padding:0 18px;min-height:36px;font-family:var(--sp-font-label);font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--sp-paper);cursor:pointer;white-space:nowrap;">Block Site →</button>
+      </div>
+      <div id="blocked-sites-list"></div>
+    </div>
+  </section>
+
+  <!-- CHAT LOG PANEL ──────────────────────────────────────────────────── -->
+  <section class="panel" id="panel-chatlog" style="display:none">
+    <div class="panel-head">
+      <div>
+        <div class="panel-eyebrow">// Chat Log</div>
+        <h1 class="panel-title">Chatbot Monitoring</h1>
+        <p class="panel-desc">All student prompts and responses — newest first</p>
+      </div>
+      <div class="panel-head-right">
+        <button class="chip-btn" id="chatlog-flagged-toggle" data-active="0">🚩 Flagged Only</button>
+        <div class="badge-pill" id="chatlog-count">0 entries</div>
+      </div>
+    </div>
+    <div class="filter-row">
+      <input class="filter-input" id="chatlog-search" placeholder="Search keyword..." />
+      <input class="filter-input" id="chatlog-student" placeholder="Filter by student name..." />
+    </div>
+    <div id="chatlog-list" class="log-list">
+      <div class="empty-state">No chat history yet.</div>
+    </div>
+  </section>
+
+  <!-- SAFEGUARDS PANEL: moved to admin hub ───────────────────────────── -->
+  <!-- <section class="panel" id="panel-safeguards"> removed — admin only now -->
+
+  <!-- BROADCAST PANEL ────────────────────────────────────────────────── -->
+  <section class="panel" id="panel-broadcast" style="display:none">
+    <div class="panel-head">
+      <div>
+        <div class="panel-eyebrow">// Broadcast</div>
+        <h1 class="panel-title">Broadcast Message</h1>
+        <p class="panel-desc">Messages appear instantly on every student's screen</p>
+      </div>
+    </div>
+
+    <div class="broadcast-layout">
+      <div class="broadcast-composer">
+        <div class="form-group">
+          <label class="form-label">Message Type</label>
+          <div class="type-selector" id="broadcast-type-selector">
+            <button class="type-btn active" data-type="text">📝 Text<span class="type-theme-tag">→ Blackboard</span></button>
+            <button class="type-btn" data-type="image">🖼️ Image<span class="type-theme-tag">→ Blackboard</span></button>
+            <button class="type-btn" data-type="youtube">▶️ YouTube<span class="type-theme-tag">→ Vintage TV</span></button>
+            <button class="type-btn" data-type="audio">🔊 Audio URL<span class="type-theme-tag">→ Record Player</span></button>
+            <button class="type-btn" data-type="record">🎙️ Record<span class="type-theme-tag">→ Record Player</span></button>
+          </div>
+
+          <div id="record-ui" class="record-ui" style="display:none">
+            <div id="record-idle-state">
+              <button class="record-start-btn" id="record-start-btn">
+                <span class="record-btn-dot"></span> Start Recording
+              </button>
+              <p class="record-hint">Voice plays on student screens via the Vintage Record Player theme</p>
+            </div>
+            <div id="record-active-state" style="display:none">
+              <div class="record-active-row">
+                <div class="record-live-dot"></div>
+                <span id="record-timer-display">0:00</span>
+                <canvas id="record-waveform" height="40" style="flex:1;border-radius:4px"></canvas>
+                <button class="record-stop-btn" id="record-stop-btn">⏹ Stop</button>
+              </div>
+            </div>
+            <div id="record-preview-state" style="display:none">
+              <div class="record-preview-row">
+                <audio id="record-playback-audio" controls></audio>
+                <span class="record-duration-label" id="record-final-duration"></span>
+              </div>
+              <div class="record-preview-actions">
+                <button class="btn-ghost" id="record-rerecord-btn">↺ Re-record</button>
+                <button class="btn-primary btn-lg" id="record-send-btn">📢 Send Voice Broadcast</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Message</label>
+          <textarea id="broadcast-text" class="broadcast-textarea" placeholder="Type your message here..."></textarea>
+        </div>
+        <div class="form-group" id="broadcast-media-group" style="display:none">
+          <label class="form-label" id="broadcast-media-label">Media URL</label>
+          <input type="url" id="broadcast-media-url" class="filter-input" placeholder="https://" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Send To</label>
+          <div class="send-to-row">
+            <label class="radio-label">
+              <input type="radio" name="broadcast-target" value="all" checked> All Students
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="broadcast-target" value="specific"> Specific Students
+            </label>
+          </div>
+          <div id="target-students-wrap" style="display:none">
+            <input type="text" id="broadcast-target-students" class="filter-input" placeholder="Names comma-separated: Alice, Bob, Carlos" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Options</label>
+          <div class="options-row">
+            <label class="option-label">
+              <input type="checkbox" id="broadcast-schedule-check"> Schedule
+              <input type="datetime-local" id="broadcast-schedule-time" class="time-input-sm" style="display:none" />
+            </label>
+            <label class="option-label">
+              <input type="checkbox" id="broadcast-repeat-check"> Repeat every
+              <input type="number" id="broadcast-repeat-mins" class="time-input-sm-n" min="1" max="120" value="5" style="display:none" /> min
+            </label>
+          </div>
+        </div>
+        <div class="broadcast-actions">
+          <button class="btn-primary btn-lg" id="send-broadcast-btn">📢 Send Broadcast</button>
+          <button class="btn-danger" id="clear-broadcast-btn" style="display:none">✕ Clear Active Broadcast</button>
+        </div>
+        <div id="broadcast-status" class="save-status"></div>
+      </div>
+
+      <div class="broadcast-preview-wrap">
+        <h3 class="sg-card-title">Active Broadcast</h3>
+        <div id="active-broadcast-preview" class="active-broadcast-preview">
+          <div class="no-broadcast">No active broadcast</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="recording-library-section">
+      <h3 class="sg-card-title">Recording Library</h3>
+      <p class="sg-card-desc">All recorded voice broadcasts — click play to review, or Reuse to re-broadcast</p>
+      <div id="recording-library-list"><div class="empty-state">No recordings saved yet.</div></div>
+    </div>
+
+    <div class="bh-section">
+      <div class="bh-header-row">
+        <div>
+          <h3 class="sg-card-title">Broadcast History</h3>
+          <p class="sg-card-desc">Engagement tracking — who saw each broadcast and who dismissed it</p>
+        </div>
+        <button class="btn-ghost bh-refresh-btn" id="refresh-broadcast-history-btn">↻ Refresh</button>
+      </div>
+      <div id="broadcast-history-list"><div class="empty-state">No broadcasts sent yet.</div></div>
+    </div>
+  </section>
+
+  <!-- MEETINGS PANEL (Study Huddle + Zoom, both "start now" actions) ──── -->
+  <section class="panel" id="panel-huddles" style="display:none">
+    <div class="panel-head">
+      <div>
+        <div class="panel-eyebrow">// Meetings</div>
+        <h1 class="panel-title">Start a Meeting</h1>
+        <p class="panel-desc">Start a Study Huddle or a Zoom meeting, and see who's in a huddle right now</p>
+      </div>
+      <div class="panel-head-right">
+        <button class="btn-navy" id="th-start-huddle-btn">+ Start a Huddle</button>
+        <button class="btn-navy" id="zoom-start-instant-btn">Start Zoom Meeting</button>
+        <button class="btn-navy" id="zoom-start-class-btn">Start / Open My Class Meeting</button>
+        <!-- Connects this teacher's own Zoom account via /auth/zoom (Phase 2,
+             per-teacher OAuth — distinct from the account-level S2S app the
+             Start buttons above use, which already work without this).
+             Enables upcoming in-app embedded hosting, not a prerequisite for
+             the Start buttons today. Styled like index.html's Canvas connect
+             button. Swapped for a "✓ Zoom Connected" indicator once connected
+             — see checkZoomConnection() in teacher.js. -->
+        <button id="zoomConnectBtn" style="background:var(--sp-ink);color:var(--sp-paper);border:2px solid var(--sp-ink);border-radius:22px;height:36px;padding:0 18px;font-family:var(--sp-font-label);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;">Connect Zoom</button>
+        <button class="btn-secondary" id="th-huddles-refresh-btn">↻ Refresh</button>
+        <div class="badge-pill" id="th-huddles-count">0 active</div>
+      </div>
+    </div>
+    <div id="th-huddle-create-form" class="zoom-manager-form" style="display:none">
+      <div class="zoom-manager-form-grid">
+        <div class="form-group">
+          <label class="form-label">Huddle Name</label>
+          <input type="text" id="thc-name" class="stab-input" placeholder="e.g. Office Hours" maxlength="80" value="Study Huddle" />
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:12px">
+        <label class="form-label">Invite Students (optional, up to 3)</label>
+        <input type="text" id="thc-invite-search" class="stab-input" placeholder="Search students…" />
+        <div id="thc-invite-list" class="th-invite-list"></div>
+        <div id="thc-invite-pills" class="th-invite-pills"></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn-navy" id="thc-start-btn">Start Huddle</button>
+        <button class="btn-text" id="thc-cancel-btn">Cancel</button>
+      </div>
+    </div>
+    <div id="zoom-start-result" style="display:none;margin-bottom:16px"></div>
+    <div id="th-huddles-list" class="th-huddles-list">
+      <div class="empty-state">Loading…</div>
+    </div>
+  </section>
+
+  <!-- PROMPT INVENTORY PANEL ─────────────────────────────────────────── -->
+  <section class="panel" id="panel-prompts" style="display:none">
+    <div class="panel-head">
+      <div>
+        <div class="panel-eyebrow">// Prompt Inventory</div>
+        <h1 class="panel-title">Prompt Inventory</h1>
+        <p class="panel-desc">Every student chatbot prompt — searchable, filterable, exportable</p>
+      </div>
+      <div class="panel-head-right">
+        <button class="btn-secondary" id="export-prompts-btn">⬇ Export CSV</button>
+        <div class="badge-pill" id="prompts-count">0 prompts</div>
+      </div>
+    </div>
+    <div class="filter-row">
+      <input class="filter-input" id="prompt-search" placeholder="Search prompt text..." />
+      <input class="filter-input" id="prompt-student-filter" placeholder="Filter by student..." />
+      <select class="filter-select" id="prompt-subject-filter">
+        <option value="">All subjects</option>
+        <option>Biology</option><option>Chemistry</option><option>Physics</option>
+        <option>Math</option><option>English</option><option>History</option>
+        <option>Science</option><option>YouTube</option><option>Canvas</option>
+        <option>Drive</option><option>General</option>
+      </select>
+      <label class="option-label"><input type="checkbox" id="prompt-flagged-only"> Flagged only</label>
+    </div>
+    <div class="date-filter-row">
+      <label class="date-filter-label">From <input type="date" id="prompt-date-from" class="date-input"></label>
+      <label class="date-filter-label">To <input type="date" id="prompt-date-to" class="date-input"></label>
+      <button class="btn-ghost" id="prompt-date-clear">Clear</button>
+      <div style="flex:1"></div>
+      <label class="date-filter-label">Sort:
+        <select class="filter-select" id="prompt-sort-by">
+          <option value="time-desc">Newest first</option>
+          <option value="time-asc">Oldest first</option>
+          <option value="student">Student A→Z</option>
+          <option value="subject">Subject A→Z</option>
+        </select>
+      </label>
+    </div>
+    <div id="prompt-table-wrap" class="table-wrap">
+      <div class="empty-state">No prompts recorded yet.</div>
+    </div>
+    <div id="prompt-detail-modal" class="prompt-modal" style="display:none">
+      <div class="prompt-modal-inner">
+        <button class="prompt-modal-close" id="prompt-modal-close">✕ Close</button>
+        <div id="prompt-detail-content"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALYTICS PANEL ────────────────────────────────────────────────── -->
+  <section class="panel" id="panel-analytics" style="display:none">
+    <div class="data-status-bar" id="data-status-bar">
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <span style="font-family:var(--sp-font-label);font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--sp-blue);">// Data status</span>
+        <span id="data-status-chatbot" style="font-family:var(--sp-font-label);font-size:11px;color:var(--sp-muted);">Chatbot: —</span>
+        <span id="data-status-activity" style="font-family:var(--sp-font-label);font-size:11px;color:var(--sp-muted);">Activity: —</span>
+        <span id="data-status-updated" style="font-family:var(--sp-font-label);font-size:11px;color:var(--sp-muted);">Last updated: —</span>
+      </div>
+      <button onclick="refreshAllDataStatus(event)" style="background:var(--sp-paper);border:2px solid var(--sp-ink);border-radius:100px;padding:5px 12px;font-family:var(--sp-font-label);font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--sp-ink);cursor:pointer;">↻ Refresh all</button>
+    </div>
+
+    <div class="panel-head">
+      <div>
+        <div class="panel-eyebrow">// Analytics</div>
+        <h1 class="panel-title">Analytics</h1>
+        <p class="panel-desc">Chatbot usage breakdown, word analysis, and concern flags</p>
+      </div>
+      <div class="panel-head-right">
+        <button class="btn-secondary" id="export-analytics-btn">⬇ Export CSV</button>
+      </div>
+    </div>
+
+    <div class="analytics-week-nav" id="analytics-week-nav">
+      <button class="btn-ghost" id="analytics-week-prev" title="Previous week">◀</button>
+      <span class="analytics-week-label" id="analytics-week-label">Week of …</span>
+      <button class="btn-ghost" id="analytics-week-next" title="Next week">▶</button>
+      <button class="btn-ghost" id="analytics-week-thisweek" style="margin-left:6px;">This Week</button>
+      <span class="analytics-week-custom-toggle" id="analytics-week-custom-toggle">Custom range</span>
+      <label class="date-filter-label" id="analytics-date-from-wrap" style="display:none">From <input type="date" id="analytics-date-from" class="date-input"></label>
+      <label class="date-filter-label" id="analytics-date-to-wrap" style="display:none">To <input type="date" id="analytics-date-to" class="date-input"></label>
+    </div>
+
+    <div class="analytics-stats-row" id="analytics-stats"></div>
+
+    <div class="analytics-section">
+      <h3 class="analytics-section-title">Most Used Words — Word Cloud</h3>
+      <div id="word-cloud" class="word-cloud"><div class="empty-state">No data yet.</div></div>
+      <h4 class="analytics-subsection-title">Top 10 Most Used Words</h4>
+      <div id="top-words-chart" class="bar-chart-wrap"></div>
+    </div>
+
+    <div class="analytics-section">
+      <h3 class="analytics-section-title">Prompt Types Breakdown</h3>
+      <div id="prompt-categories-chart" class="bar-chart-wrap"></div>
+    </div>
+
+    <div class="analytics-section">
+      <h3 class="analytics-section-title">Usage Over Time (Last 14 Days)</h3>
+      <div id="usage-by-day-chart"></div>
+      <h4 class="analytics-subsection-title">Activity by Hour of Day</h4>
+      <div id="usage-by-hour-chart"></div>
+    </div>
+
+    <div class="analytics-section">
+      <h3 class="analytics-section-title">Subject Area Breakdown</h3>
+      <div id="subject-chart" class="bar-chart-wrap"></div>
+    </div>
+
+    <div class="analytics-section">
+      <h3 class="analytics-section-title">Most Active Students</h3>
+      <div id="student-activity-chart" class="bar-chart-wrap"></div>
+    </div>
+
+    <div class="analytics-section">
+      <h3 class="analytics-section-title">Concern Flags Summary</h3>
+      <div id="concern-flags-summary"></div>
+    </div>
+  </section>
+
+  <!-- ROSTER PANEL ───────────────────────────────────────────────────── -->
+  <section class="panel" id="panel-roster" style="display:none">
+    <div class="panel-head">
+      <div>
+        <div class="panel-eyebrow">// Class Roster</div>
+        <h1 class="panel-title">Class Roster</h1>
+        <p class="panel-desc">Manage student accounts and class groups</p>
+      </div>
+      <div class="panel-head-right">
+        <button class="btn-primary" id="add-student-btn">+ Add Student</button>
+        <button class="btn-secondary" id="add-group-btn">+ New Group</button>
+      </div>
+    </div>
+
+    <div class="add-student-row" id="add-student-row" style="display:none">
+      <input type="text" id="new-student-name" class="filter-input" placeholder="Student name..." />
+      <select id="new-student-group" class="filter-select"><option value="">No group</option></select>
+      <button class="btn-primary" id="confirm-add-student">Add</button>
+      <button class="btn-ghost" id="cancel-add-student">Cancel</button>
+    </div>
+
+    <div class="roster-layout">
+      <div id="groups-list" class="groups-list"></div>
+      <div id="roster-table" class="table-wrap">
+        <div class="empty-state">No students added yet.<br>Add students above to track their activity.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WEBSITES PANEL ─────────────────────────────────────────────────── -->
+  <section class="panel" id="panel-websites" style="display:none">
+    <div class="panel-head">
+      <div>
+        <div class="panel-eyebrow">// Website Tracker</div>
+        <h1 class="panel-title">Website Tracker</h1>
+        <p class="panel-desc">All external links visited by students from the hub</p>
+      </div>
+      <div class="badge-pill" id="website-count">0 visits</div>
+    </div>
+    <div id="website-summary" class="website-summary"></div>
+    <div class="filter-row">
+      <input class="filter-input" id="website-search" placeholder="Search URL or domain..." />
+      <input class="filter-input" id="website-student" placeholder="Filter by student..." />
+    </div>
+    <div id="website-list" class="log-list">
+      <div class="empty-state">No website visits recorded yet.</div>
+    </div>
+  </section>
+
+  <!-- SUPPORT TEAM PANEL ─────────────────────────────────────────────── -->
+  <section class="panel" id="panel-people" style="display:none">
+    <div class="panel-head">
+      <div>
+        <div class="panel-eyebrow">// Support Team</div>
+        <h1 class="panel-title">Support Team Manager</h1>
+        <p class="panel-desc">Manage your students' support team and set your availability status</p>
+      </div>
+      <div class="panel-head-right">
+        <button class="btn-navy" id="add-team-member-btn">+ Add Member</button>
+      </div>
+    </div>
+
+    <div class="ts-card" style="margin-bottom:20px">
+      <div class="ts-card-title"><i class="ti ti-user-check" aria-hidden="true"></i> My Availability Status</div>
+      <p style="font-size:.85rem;color:var(--sp-muted);margin-bottom:14px">Students see your status in real-time on the People tab of their hub.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="avail-set-btn" data-status="available" style="background:#16a34a;color:#fff;border:none;padding:10px 20px;border-radius:10px;font-size:.9rem;font-weight:600;cursor:pointer">Available</button>
+        <button class="avail-set-btn" data-status="busy"      style="background:#dc2626;color:#fff;border:none;padding:10px 20px;border-radius:10px;font-size:.9rem;font-weight:600;cursor:pointer">Busy</button>
+        <button class="avail-set-btn" data-status="offline"   style="background:#9ca3af;color:#fff;border:none;padding:10px 20px;border-radius:10px;font-size:.9rem;font-weight:600;cursor:pointer">Offline</button>
+      </div>
+      <div id="avail-status-msg" style="margin-top:12px;font-size:.85rem;color:#16a34a;display:none"></div>
+    </div>
+
+    <div class="ts-card" style="margin-bottom:20px">
+      <div class="ts-card-title"><i class="ti ti-users" aria-hidden="true"></i> Support Team Members</div>
+      <div id="people-team-list"><div class="loading">Loading…</div></div>
+    </div>
+
+    <div class="ts-card">
+      <div class="ts-card-title"><i class="ti ti-trophy" aria-hidden="true"></i> Sport Schedule</div>
+      <p style="font-size:.85rem;color:var(--sp-muted);margin-bottom:12px">
+        Each team has its own schedule. Students see only their own team's schedule
+        (set per-student in Admin Hub → All Students → Sport) — pick a team below
+        to view or edit its practices/games.
+      </p>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+        <label style="font-size:.8rem;font-weight:600;color:var(--sp-ink)">Team</label>
+        <select id="soccer-team-select" style="padding:8px 10px;border:2px solid var(--sp-ink);border-radius:8px;font-size:.88rem;min-width:180px;min-height:40px;">
+          <option value="">Loading teams…</option>
+        </select>
+        <button class="btn-ghost" id="soccer-new-team-btn">+ New Team</button>
+      </div>
+      <div id="soccer-team-editor" style="display:none">
+        <div style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap">
+          <div style="flex:1;min-width:160px">
+            <label style="font-size:.8rem;font-weight:600;color:var(--sp-ink);display:block;margin-bottom:4px">Team Name</label>
+            <input type="text" id="soccer-team-name-input" class="modal-input" style="width:100%" />
+          </div>
+          <div style="flex:1;min-width:160px">
+            <label style="font-size:.8rem;font-weight:600;color:var(--sp-ink);display:block;margin-bottom:4px">Coach</label>
+            <input type="text" id="soccer-team-coach-input" class="modal-input" style="width:100%" />
+          </div>
+        </div>
+        <div id="soccer-editor-rows" style="margin-bottom:12px"></div>
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <button class="btn-ghost" id="add-soccer-row-btn">+ Add Row</button>
+        </div>
+        <div style="margin-bottom:10px">
+          <label style="font-size:.8rem;font-weight:600;color:var(--sp-ink);display:block;margin-bottom:4px">Upcoming Event</label>
+          <input type="text" id="soccer-upcoming-input" class="modal-input" placeholder="e.g. Game vs. Ridge Academy — Fri June 19 @ 4:00 PM" style="width:100%" />
+          <div id="soccer-suggestion-row" style="margin-top:6px;font-size:.8rem;color:var(--sp-muted);display:none">
+            Suggested from schedule: <span id="soccer-suggestion-text"></span>
+            <button type="button" id="soccer-use-suggestion-btn" class="btn-ghost" style="padding:2px 8px;font-size:.75rem;margin-left:8px">Use this</button>
+            <button type="button" id="soccer-recompute-btn" class="btn-ghost" style="padding:2px 8px;font-size:.75rem;margin-left:4px" title="Recompute from the rows above, including unsaved edits">🔄 Recompute</button>
+          </div>
+        </div>
+        <button class="btn-navy btn-sm" id="save-soccer-btn">Save Schedule</button>
+        <span id="soccer-save-msg" style="font-size:.82rem;color:#16a34a;margin-left:10px;display:none">Saved!</span>
+      </div>
+      <div id="soccer-no-team-msg" style="display:none;color:var(--sp-muted);font-size:.88rem">No teams yet — click "+ New Team" to create one.</div>
+    </div>
+  </section>
+
+  <!-- Add/Edit Team Member Modal -->
+  <div id="team-member-modal" class="prompt-modal" style="display:none">
+    <div class="prompt-modal-inner" style="max-width:480px">
+      <div class="prompt-modal-title" id="team-modal-title">Add Team Member</div>
+      <input type="hidden" id="tm-id" />
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div><label class="form-label">Name *</label><input type="text" id="tm-name" class="modal-input" placeholder="Mr. Smith" /></div>
+        <div><label class="form-label">Role</label><input type="text" id="tm-role" class="modal-input" placeholder="Math Teacher" /></div>
+        <div><label class="form-label">Slack Handle</label><input type="text" id="tm-slack" class="modal-input" placeholder="jsmith" /></div>
+        <div><label class="form-label">Slack User ID</label><input type="text" id="tm-slackid" class="modal-input" placeholder="U01ABC123" /></div>
+        <div><label class="form-label">Email</label><input type="email" id="tm-email" class="modal-input" placeholder="jsmith@example.edu" /></div>
+        <div><label class="form-label">Initials</label><input type="text" id="tm-initials" class="modal-input" placeholder="JS" maxlength="3" /></div>
+        <div><label class="form-label">Avatar Color</label><input type="color" id="tm-color" class="color-swatch" value="#2B3BFF" style="width:100%;height:38px;border-radius:8px;border:2px solid var(--sp-ink);cursor:pointer" /></div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn-ghost" id="tm-cancel-btn">Cancel</button>
+        <button class="btn-navy" id="tm-save-btn">Save Member</button>
+      </div>
+      <div id="tm-error" style="color:#dc2626;font-size:.82rem;margin-top:8px;display:none"></div>
+    </div>
+  </div>
+
+  <!-- ZOOM LINKS PANEL ───────────────────────────────────────────────── -->
+  <section class="panel" id="panel-zoom" style="display:none">
+    <div class="panel-head">
+      <div>
+        <div class="panel-eyebrow">// Zoom Links</div>
+        <h1 class="panel-title">Zoom Links Manager</h1>
+        <p class="panel-desc">Post class Zoom links — students see them instantly in the Virtual Meetings tab</p>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn-navy" id="zoom-btn" style="height:36px">Open Zoom ↗</button>
+        <button class="btn-navy" id="huddle-btn" style="height:36px">Open Slack ↗</button>
+        <button class="btn-navy" id="zoom-add-link-btn" style="height:36px">+ Add Zoom Link</button>
+      </div>
+    </div>
+
+    <div id="zoom-link-form" class="zoom-manager-form" style="display:none">
+      <div class="zoom-manager-form-grid">
+        <div class="form-group">
+          <label class="form-label">Meeting Name *</label>
+          <input type="text" id="zm-label" class="stab-input" placeholder="e.g. Morning Homeroom" maxlength="80" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Zoom Link *</label>
+          <input type="url" id="zm-url" class="stab-input" placeholder="https://zoom.us/j/..." />
+        </div>
+        <div class="form-group">
+          <label class="form-label">For Class</label>
+          <input type="text" id="zm-class" class="stab-input" placeholder="e.g. Period 2 Math" maxlength="60" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Schedule</label>
+          <input type="text" id="zm-schedule" class="stab-input" placeholder="e.g. Every Monday 3pm" maxlength="80" />
+        </div>
+      </div>
+      <input type="hidden" id="zm-edit-id" />
+      <div style="display:flex;gap:10px;margin-top:12px">
+        <button class="btn-navy" id="zm-save-btn">Save Link</button>
+        <button class="btn-text" id="zm-cancel-btn">Cancel</button>
+      </div>
+    </div>
+
+    <div id="zoom-links-list" class="zoom-manager-list">
+      <div class="loading">Loading…</div>
+    </div>
+  </section>
+
+  <!-- NOTIFICATIONS PANEL ────────────────────────────────────────────── -->
+  <section class="panel" id="panel-notifications" style="display:none">
+    <div class="panel-head">
+      <div>
+        <div class="panel-eyebrow">// Notifications</div>
+        <h1 class="panel-title">Notification Sounds</h1>
+        <p class="panel-desc">Choose which mentee events play a sound while you're in the Teacher Hub.</p>
+      </div>
+    </div>
+
+    <div class="ts-card" style="max-width:520px">
+      <div class="ts-card-title"><i class="ti ti-bell" aria-hidden="true"></i> Sounds</div>
+
+      <div class="tn-row">
+        <div>
+          <div class="tn-row-label">Mentee login</div>
+          <div class="tn-row-desc">Plays when one of your mentees logs into the Student Hub — only while this tab isn't focused.</div>
+        </div>
+        <label class="tn-toggle"><input type="checkbox" id="tn-toggle-login"><span class="tn-toggle-slider"></span></label>
+      </div>
+
+      <div class="tn-row">
+        <div>
+          <div class="tn-row-label">Mentor Chat message</div>
+          <div class="tn-row-desc">Plays whenever a mentee sends you a message, regardless of focus.</div>
+        </div>
+        <label class="tn-toggle"><input type="checkbox" id="tn-toggle-message"><span class="tn-toggle-slider"></span></label>
+      </div>
+
+      <div class="tn-volume-row">
+        <label for="tn-volume" class="tn-row-label">Volume</label>
+        <input type="range" id="tn-volume" min="0" max="1" step="0.05">
+      </div>
+
+      <div class="tn-preview-row">
+        <button class="btn-ghost" id="tn-preview-login-btn">▶ Preview login sound</button>
+        <button class="btn-ghost" id="tn-preview-message-btn">▶ Preview message sound</button>
+      </div>
+
+      <div id="tn-save-msg" class="tn-save-msg">Saved!</div>
+    </div>
+
+    <div class="ts-card" style="max-width:520px;margin-top:16px">
+      <div class="ts-card-title"><i class="ti ti-mail" aria-hidden="true"></i> Weekly summary</div>
+
+      <div class="tn-row">
+        <div>
+          <div class="tn-row-label">Weekly mentee digest</div>
+          <div class="tn-row-desc">A Slack DM every Sunday evening with a plain-facts recap of your mentees' Student Hub usage over the past week.</div>
+        </div>
+        <label class="tn-toggle"><input type="checkbox" id="tn-toggle-digest"><span class="tn-toggle-slider"></span></label>
+      </div>
+
+      <div id="tn-digest-save-msg" class="tn-save-msg">Saved!</div>
+    </div>
+  </section>
+
+  <!-- QUICK LINKS PANEL ──────────────────────────────────────────────── -->
+  <section class="panel" id="panel-quicklinks" style="display:none">
+    <div class="panel-head">
+      <div>
+        <div class="panel-eyebrow">// Quick Links</div>
+        <h1 class="panel-title">Quick Access Links</h1>
+        <p class="panel-desc">Personal shortcuts shown as one-click buttons at the top of your Teacher Hub.</p>
+      </div>
+    </div>
+
+    <div class="ts-card" style="max-width:520px">
+      <div class="ts-card-title"><i class="ti ti-chart-bar" aria-hidden="true"></i> Cidi Labs Observ Ed</div>
+      <div class="tn-row-desc" style="margin-bottom:10px">
+        Paste the link to your own Observ Ed course (find it on your Canvas dashboard — each
+        teacher has their own course, so this can't be filled in for you). It shows your
+        mentees' grades and assignments and opens in a new tab from the button at the top of
+        this page once saved.
+      </div>
+      <div class="form-group">
+        <label class="form-label">Course URL</label>
+        <input type="url" id="ql-observed-url" class="stab-input" placeholder="https://yscacademy.instructure.com/courses/..." />
+      </div>
+      <div style="display:flex;gap:10px;margin-top:12px;align-items:center">
+        <button class="btn-navy" id="ql-save-btn">Save</button>
+        <div id="ql-save-msg" class="tn-save-msg">Saved!</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OFFICE HOURS PANEL (act + pace plan, Phase 2a) ──────────────────── -->
+  <section class="panel" id="panel-office-hours" style="display:none">
+    <div class="panel-head">
+      <div>
+        <div class="panel-eyebrow">// Office Hours</div>
+        <h1 class="panel-title">Your Office Hours</h1>
+        <p class="panel-desc">Weekly times students can come to you for help. Your students see them on their Team tab, and the AI coach suggests them when a student is stuck.</p>
+      </div>
+    </div>
+
+    <div class="ts-card" style="max-width:640px;margin-bottom:16px">
+      <div class="ts-card-title"><i class="ti ti-hand-stop" aria-hidden="true"></i> Requests from students</div>
+      <div id="oh-requests" class="oh-requests"><div class="tn-row-desc">Loading…</div></div>
+    </div>
+
+    <div class="ts-card" style="max-width:640px">
+      <div class="form-group">
+        <label class="form-label" for="oh-name">Your name as students see it in Canvas</label>
+        <input type="text" id="oh-name" class="stab-input" maxlength="80" placeholder="e.g. Susan Kroll" />
+        <div class="tn-row-desc" style="margin-top:4px">Used to match you to your students' Canvas courses — use your first and last name exactly as Canvas shows them.</div>
+      </div>
+      <div class="ts-card-title" style="margin-top:14px"><i class="ti ti-clock" aria-hidden="true"></i> Weekly times <span class="tn-row-desc">(Eastern time)</span></div>
+      <div id="oh-rows"></div>
+      <div id="oh-empty" class="tn-row-desc" style="display:none;margin:6px 0">No office hours yet.</div>
+      <button type="button" class="btn-ghost" id="oh-add-btn" style="margin-top:8px"><i class="ti ti-plus" aria-hidden="true"></i> Add a time</button>
+      <div style="display:flex;gap:10px;margin-top:14px;align-items:center">
+        <button class="btn-navy" id="oh-save-btn">Save</button>
+        <div id="oh-save-msg" class="tn-save-msg">Saved!</div>
+      </div>
+      <div id="oh-error" class="oh-error" role="alert" style="display:none"></div>
+    </div>
+  </section>
+
+  <!-- MENTOR INBOX PANEL ─────────────────────────────────────────────── -->
+  <section class="panel" id="panel-mentor-inbox" style="display:none">
+    <div class="panel-head">
+      <div>
+        <div class="panel-eyebrow">// Mentor Inbox</div>
+        <h1 class="panel-title">Student Mentor Messages</h1>
+        <p class="panel-desc">Incoming messages from students — reply here or via Slack</p>
+      </div>
+      <div class="panel-head-right">
+        <div class="badge-pill" id="mentor-inbox-count">0 messages</div>
+      </div>
+    </div>
+
+    <div class="weekly-msg-panel" style="background:var(--sp-paper);border:2px solid var(--sp-ink);border-radius:24px;box-shadow:5px 5px 0 var(--sp-ink);overflow:hidden;">
+      <div style="padding:12px 16px;border-bottom:2px solid var(--sp-ink);background:var(--sp-tint);">
+        <div style="font-family:var(--sp-font-label);font-size:12px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--sp-blue);margin-bottom:3px;">// Weekly message to your students</div>
+        <div style="font-family:var(--sp-font-label);font-size:11px;color:var(--sp-muted);letter-spacing:0.06em;">Appears on every assigned student's hub — Mon through Sun</div>
+      </div>
+      <div id="wmp-compose" style="padding:14px 16px;background:var(--sp-paper);">
+        <textarea id="weekly-msg-input" placeholder="Write something your students need to hear this week..." maxlength="500" rows="3" style="width:100%;box-sizing:border-box;background:var(--sp-paper);border:2px solid var(--sp-ink);border-radius:14px;padding:10px 12px;font-family:var(--sp-font-body);font-size:14px;color:var(--sp-ink);line-height:1.6;resize:none;outline:none;"></textarea>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
+          <span style="font-family:var(--sp-font-label);font-size:11px;color:var(--sp-muted);"><span id="wmp-count">0</span>/500</span>
+          <button onclick="postWeeklyMessage()" style="background:var(--sp-ink);border:2px solid var(--sp-ink);border-radius:22px;padding:8px 18px;min-height:40px;font-family:var(--sp-font-label);font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--sp-paper);cursor:pointer;">Post for this week →</button>
+        </div>
+        <div id="wmp-status" style="font-family:var(--sp-font-label);font-size:11px;margin-top:6px;display:none;"></div>
+      </div>
+      <div id="wmp-prev" style="display:none;padding:14px 16px;background:var(--sp-yellow);border-top:2px solid var(--sp-ink);">
+        <div style="font-family:var(--sp-font-label);font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--sp-ink);margin-bottom:6px;">// This week's message</div>
+        <div id="wmp-prev-text" style="font-family:var(--sp-font-body);font-size:14px;color:var(--sp-ink);font-style:italic;border-left:2px solid var(--sp-ink);padding-left:10px;line-height:1.6;"></div>
+        <div id="wmp-prev-meta" style="font-family:var(--sp-font-label);font-size:10px;color:var(--sp-ink);opacity:.7;margin-top:5px;"></div>
+        <button onclick="editWeeklyMessage()" style="font-family:var(--sp-font-label);font-size:10px;color:var(--sp-ink);text-decoration:underline;background:transparent;border:none;cursor:pointer;margin-top:6px;letter-spacing:0.08em;text-transform:uppercase;">Edit message</button>
+      </div>
+    </div>
+
+    <div class="mentor-inbox">
+      <div class="mentor-inbox-header">
+        <span class="col-eyebrow">// Student Mentor Messages</span>
+        <span class="col-count" id="unread-count">0 unread</span>
+      </div>
+      <div class="mentor-inbox-body" id="mentor-inbox-body">
+        <div class="empty-state" id="mentor-inbox-empty">No messages yet — they'll appear here as students write in.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHATBOT FEEDBACK PANEL ─────────────────────────────────────────────── -->
+  <section class="panel" id="panel-chat-feedback" style="display:none">
+    <div class="panel-head">
+      <div>
+        <div class="panel-eyebrow">// Chatbot Feedback</div>
+        <h1 class="panel-title">How Students Rate the AI Coach</h1>
+        <p class="panel-desc">👍 / 👎 your assigned students gave to individual coach replies — with the question they asked and the answer they got, so you can see exactly what to improve.</p>
+      </div>
+    </div>
+    <div style="background:var(--sp-tint);border:2px solid var(--sp-ink);border-radius:16px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+      <span style="font-family:var(--sp-font-label);font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--sp-blue);">// Filter</span>
+      <select id="cf-days" onchange="loadChatFeedback()" style="background:var(--sp-paper);border:2px solid var(--sp-ink);border-radius:10px;padding:7px 10px;min-height:36px;font-family:var(--sp-font-body);font-size:14px;color:var(--sp-ink);">
+        <option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option>
+      </select>
+      <select id="cf-rating" onchange="loadChatFeedback()" style="background:var(--sp-paper);border:2px solid var(--sp-ink);border-radius:10px;padding:7px 10px;min-height:36px;font-family:var(--sp-font-body);font-size:14px;color:var(--sp-ink);">
+        <option value="">All ratings</option><option value="down" selected>👎 Not helpful only</option><option value="up">👍 Helpful only</option>
+      </select>
+    </div>
+    <div id="cf-summary" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;"></div>
+    <div id="cf-list"><div class="empty-state">Loading…</div></div>
+  </section>
+
+  <!-- CHATBOT DATA PANEL ─────────────────────────────────────────────────── -->
+  <section class="panel" id="panel-chatbot-data" style="display:none">
+    <div class="panel-head">
+      <div>
+        <div class="panel-eyebrow">// Chatbot Data</div>
+        <h1 class="panel-title">AI Chatbot Usage Review</h1>
+        <p class="panel-desc">Review your assigned students' AI conversations and identify areas for instructional improvement</p>
+      </div>
+    </div>
+
+    <!-- Date range filter -->
+    <div style="background:var(--sp-tint);border:2px solid var(--sp-ink);border-radius:16px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+      <span style="font-family:var(--sp-font-label);font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--sp-blue);">// Filter</span>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <label style="font-family:var(--sp-font-label);font-size:11px;color:var(--sp-muted);text-transform:uppercase;letter-spacing:0.1em;">From</label>
+        <input type="date" id="chatbot-from" style="background:var(--sp-paper);border:2px solid var(--sp-ink);border-radius:10px;padding:7px 10px;min-height:36px;font-family:var(--sp-font-body);font-size:14px;color:var(--sp-ink);outline:none;" />
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <label style="font-family:var(--sp-font-label);font-size:11px;color:var(--sp-muted);text-transform:uppercase;letter-spacing:0.1em;">To</label>
+        <input type="date" id="chatbot-to" style="background:var(--sp-paper);border:2px solid var(--sp-ink);border-radius:10px;padding:7px 10px;min-height:36px;font-family:var(--sp-font-body);font-size:14px;color:var(--sp-ink);outline:none;" />
+      </div>
+      <button onclick="loadChatbotSummary()" class="btn-primary" style="padding:8px 16px;font-size:13px;">Apply →</button>
+      <button onclick="exportAllChatbot()" class="btn-secondary" style="padding:8px 16px;font-size:13px;">Export All CSV</button>
+    </div>
+
+    <!-- Summary table -->
+    <div class="table-wrap" style="margin-bottom:14px;">
+      <table>
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th style="width:80px;">Messages</th>
+            <th style="width:80px;">Sessions</th>
+            <th style="width:120px;">Last Active</th>
+            <th>Top Topics</th>
+            <th style="width:120px;"></th>
+          </tr>
+        </thead>
+        <tbody id="chatbot-summary-rows">
+          <tr><td colspan="6" style="color:var(--sp-muted);text-align:center;padding:24px;">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Thread viewer -->
+    <div id="chatbot-thread-panel" style="display:none;background:var(--sp-paper);border:2px solid var(--sp-ink);border-radius:16px;padding:16px 18px;margin-top:6px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <span class="panel-eyebrow" id="chatbot-thread-title" style="color:var(--sp-blue);">// Chat Thread</span>
+        <div style="display:flex;gap:10px;">
+          <button onclick="exportActiveStudentChatbot()" class="btn-secondary" style="padding:6px 14px;font-size:12px;">Export CSV</button>
+          <button onclick="closeChatbotThread()" class="btn-secondary" style="padding:6px 14px;font-size:12px;color:var(--sp-muted);border-color:var(--sp-ink);">Close ✕</button>
+        </div>
+      </div>
+      <div id="chatbot-thread-messages" style="display:flex;flex-direction:column;gap:12px;max-height:420px;overflow-y:auto;padding-right:4px;"></div>
+    </div>
+  </section>
+
+  <!-- STUDENT GOALS PANEL ─────────────────────────────────────────────── -->
+  <section class="panel" id="panel-student-goals" style="display:none">
+    <div class="panel-head">
+      <div>
+        <div class="panel-eyebrow" style="font-family:var(--sp-font-label);font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--sp-blue);">// Goals</div>
+        <h1 class="panel-title">Student Goals</h1>
+        <p class="panel-desc">Goals, daily targets, and plan of attack for your assigned students</p>
+      </div>
+      <button onclick="loadAllStudentGoals()" class="btn-secondary" style="padding:8px 16px;font-size:12px;">↻ Refresh</button>
+    </div>
+    <div id="student-goals-summary"></div>
+    <div id="student-goals-detail" style="display:none;margin-top:16px;"></div>
+  </section>
+
+</main>
+
+<!-- ── Study Huddle: full-screen join overlay ──────────────────────────────
+     Same immersive, full-viewport pattern as the student hub's
+     recovery-plan modal — not this dashboard's smaller .prompt-modal
+     dialog style. See teacher-huddles.js/.css. -->
+<div id="teacher-huddle-overlay" class="th-huddle-overlay" style="display:none">
+  <div class="th-huddle-overlay-head">
+    <div>
+      <div class="th-huddle-overlay-title" id="th-huddle-overlay-title">Study Huddle</div>
+      <div class="th-huddle-overlay-meta" id="th-huddle-overlay-meta"></div>
+    </div>
+    <button class="th-huddle-leave-btn" id="th-huddle-leave-btn">Leave</button>
+  </div>
+  <div class="th-huddle-overlay-body">
+    <div class="th-huddle-grid-col">
+      <div class="th-huddle-grid" id="th-huddle-grid"></div>
+    </div>
+    <div class="th-huddle-side-col">
+      <div class="th-huddle-side-section notes">
+        <div class="th-huddle-side-label">// Shared Notes</div>
+        <textarea class="th-huddle-notes-input" id="th-huddle-notes-input" placeholder="Notes shared with the group…"></textarea>
+        <div class="th-huddle-notes-status" id="th-huddle-notes-status"></div>
+      </div>
+      <div class="th-huddle-side-section chat">
+        <div class="th-huddle-side-label">// Group Chat</div>
+        <div class="th-huddle-chat-messages" id="th-huddle-chat-messages"></div>
+        <div class="th-huddle-chat-input-row">
+          <input class="th-huddle-chat-input" id="th-huddle-chat-input" placeholder="Message the group…" autocomplete="off" />
+          <button class="th-huddle-chat-send-btn" id="th-huddle-chat-send-btn">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script src="../teacher/teacher.js"></script>
+<script src="../teacher/teacher-huddles.js"></script>
+<script src="../preview-bar.js" data-role="teacher" data-prefix="../"></script>
+</body>
+</html>

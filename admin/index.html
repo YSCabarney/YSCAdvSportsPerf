@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="../mock.js" data-role="admin"></script>
+<script src="../mock-data.js"></script>
+<script src="../mock-admin.js"></script>
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YSC Academy — Admin Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@800&family=DM+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../vendor/tabler/tabler-icons.min.css" />
+  <link rel="stylesheet" href="../theme.css" />
+  <link rel="stylesheet" href="../admin/admin.css" />
+</head>
+<body>
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="../logo.jpg" class="sidebar-logo" alt="YSC" />
+      <div>
+        <div class="sidebar-title">YSC Academy</div>
+        <div class="sidebar-sub">Admin Portal</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-btn active" data-panel="overview">
+        <i class="ti ti-layout-dashboard" aria-hidden="true"></i> Overview
+      </button>
+      <button class="nav-btn" data-panel="teachers">
+        <i class="ti ti-school" aria-hidden="true"></i> Teachers
+      </button>
+      <button class="nav-btn" data-panel="students">
+        <i class="ti ti-users" aria-hidden="true"></i> All Students
+      </button>
+      <button class="nav-btn" data-panel="broadcasts">
+        <i class="ti ti-speakerphone" aria-hidden="true"></i> All Broadcasts
+      </button>
+      <button class="nav-btn" data-panel="mentors">
+        <i class="ti ti-link" aria-hidden="true"></i> Mentor Assignments
+      </button>
+      <button class="nav-btn" data-panel="activity">
+        <i class="ti ti-clipboard-list" aria-hidden="true"></i> Activity Log
+      </button>
+      <button class="nav-btn" data-panel="troubleshooting">
+        <i class="ti ti-tool" aria-hidden="true"></i> Troubleshooting
+        <span class="ts-badge" id="ts-nav-badge" style="display:none;margin-left:auto">0</span>
+      </button>
+      <button class="nav-btn" data-panel="safeguards">
+        <i class="ti ti-shield" aria-hidden="true"></i> Safeguards
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="../teacher/index.html" class="sidebar-link">← Teacher Dashboard</a>
+      <form method="POST" action="/teacher/logout" style="margin:0">
+        <button type="submit" class="logout-btn">Sign Out</button>
+      </form>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- OVERVIEW -->
+    <section class="panel active" id="panel-overview">
+      <div class="panel-head">
+        <h1 class="panel-title">System Overview</h1>
+        <p class="panel-desc">Real-time analytics across all teachers and students</p>
+      </div>
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card"><div class="stat-num" id="stat-teachers">—</div><div class="stat-label">Teachers</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-active">—</div><div class="stat-label">Students Online Now</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-total">—</div><div class="stat-label">Total Students Seen</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-broadcasts">—</div><div class="stat-label">Total Broadcasts</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-chats">—</div><div class="stat-label">AI Chat Entries</div></div>
+      </div>
+    </section>
+
+    <!-- TEACHERS -->
+    <section class="panel" id="panel-teachers">
+      <div class="panel-head">
+        <div>
+          <h1 class="panel-title">Teacher Accounts</h1>
+          <p class="panel-desc">Add, edit, and manage teacher logins</p>
+        </div>
+        <button class="btn-primary" onclick="openAddTeacher()">+ Add Teacher</button>
+      </div>
+      <div id="teachers-list" class="card-list">Loading…</div>
+    </section>
+
+    <!-- ALL STUDENTS -->
+    <section class="panel" id="panel-students">
+      <div class="panel-head">
+        <div>
+          <h1 class="panel-title">All Students</h1>
+          <p class="panel-desc">Every student who has ever logged in, plus live status for anyone currently online. Grade level is admin-only — never shown to students.</p>
+        </div>
+        <button class="btn-primary" onclick="openImportRoster()">+ Import Roster</button>
+      </div>
+      <div id="students-table" class="table-wrap">Loading…</div>
+    </section>
+
+    <!-- ALL BROADCASTS -->
+    <section class="panel" id="panel-broadcasts">
+      <div class="panel-head">
+        <h1 class="panel-title">All Broadcasts</h1>
+        <p class="panel-desc">Every broadcast from every teacher</p>
+      </div>
+      <div id="broadcasts-list">Loading…</div>
+    </section>
+
+    <!-- MENTOR ASSIGNMENTS -->
+    <section class="panel" id="panel-mentors">
+      <div class="panel-head">
+        <div>
+          <h1 class="panel-title">Mentor Assignments</h1>
+          <p class="panel-desc">Assign a teacher as the AI Mentor for each student. Messages route through the hub widget — no Slack notifications.</p>
+        </div>
+        <button class="btn-primary" onclick="openImportMentorAssignments()">+ Import Assignments</button>
+      </div>
+
+      <!-- Assignment form -->
+      <div class="ts-card" style="margin-bottom:28px;">
+        <h3 class="ts-card-title">Assign a Mentor</h3>
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0">
+            <label>Student</label>
+            <select id="ma-student-email" class="filter-select" style="width:100%;">
+              <option value="">Loading students…</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>Mentor</label>
+            <select id="ma-mentor-select" class="filter-select" style="width:100%;">
+              <option value="">Loading mentors…</option>
+            </select>
+          </div>
+        </div>
+        <div id="ma-email-override" style="display:none;margin-top:12px;">
+          <label style="font-family:var(--sp-font-label);font-size:.8rem;font-weight:700;color:var(--sp-ink);margin-bottom:4px;display:block;text-transform:uppercase;letter-spacing:.04em;">
+            Mentor Email <span style="background:var(--sp-coral-tint);color:var(--sp-ink);font-weight:700;text-transform:none;letter-spacing:0;padding:2px 6px;border-radius:6px;">not found in Slack profile — enter manually</span>
+          </label>
+          <input type="email" id="ma-email-input" placeholder="mentor@example.edu" class="filter-input"
+            style="width:100%;border-color:var(--sp-coral);" />
+        </div>
+        <div style="margin-top:16px;display:flex;align-items:center;gap:12px;">
+          <button class="btn-primary" onclick="assignMentor()">Assign Mentor →</button>
+          <span id="ma-status" style="font-family:var(--sp-font-label);font-size:.84rem;color:var(--sp-muted);"></span>
+        </div>
+      </div>
+
+      <!-- Current assignments table -->
+      <div class="date-filter-row">
+        <label class="date-filter-label">View:
+          <select class="filter-select" id="ma-view-mode" onchange="setMentorViewMode(this.value)">
+            <option value="date">Sort by Date (newest first)</option>
+            <option value="mentor">Group by Mentor</option>
+          </select>
+        </label>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Student Email</th>
+              <th>Mentor</th>
+              <th>Mentor Email</th>
+              <th>Slack ID</th>
+              <th>Assigned</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="ma-table-body">
+            <tr><td colspan="6" style="color:var(--sp-muted);text-align:center;padding:24px;">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Students without a mentor -->
+      <div style="margin-top:28px;">
+        <div class="panel-eyebrow" style="margin-bottom:10px;">// Students without a mentor</div>
+        <div id="unassigned-list"></div>
+      </div>
+    </section>
+
+    <!-- ACTIVITY LOG -->
+    <section class="panel" id="panel-activity">
+      <div class="panel-head">
+        <div>
+          <h1 class="panel-title">Activity Log</h1>
+          <p class="panel-desc">Real-time login tracking for all teachers and students</p>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <input type="date" id="activity-date" class="date-input" />
+          <button class="btn-primary" onclick="loadActivityByDate()">Load Date</button>
+        </div>
+      </div>
+
+      <!-- Live status bar -->
+      <div class="ts-known-form" style="margin-bottom:20px;padding:14px 18px;">
+        <div class="panel-eyebrow" style="margin-bottom:8px;">Currently Online</div>
+        <div id="activity-live-list" style="color:var(--sp-ink);font-size:.88rem;">—</div>
+      </div>
+
+      <!-- Search -->
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <input type="text" id="activity-search" placeholder="Search by name or email…" class="filter-input"
+          style="flex:1;" />
+        <button class="btn-secondary" onclick="searchActivity()">Search</button>
+        <button class="btn-secondary" onclick="loadTodayActivity()">Today</button>
+      </div>
+
+      <!-- Event log table -->
+      <div class="table-wrap" id="activity-table">Loading…</div>
+
+      <!-- All-time summary -->
+      <div style="margin-top:28px;">
+        <div class="panel-eyebrow" style="margin-bottom:14px;">// All-Time Summary</div>
+        <div class="table-wrap" id="activity-summary">Loading…</div>
+      </div>
+    </section>
+
+    <!-- TROUBLESHOOTING (moved from the Teacher Dashboard — admin-only now,
+         see routes/issues.js's requireAdmin gate) -->
+    <section class="panel" id="panel-troubleshooting">
+    <div class="panel-head">
+      <div>
+        <div class="panel-eyebrow">// Troubleshooting</div>
+        <h1 class="panel-title">Troubleshooting &amp; Issue Log</h1>
+        <p class="panel-desc">Real-time student hub monitoring · auto-refreshes every 60 seconds</p>
+      </div>
+      <div class="panel-head-right">
+        <button class="btn-secondary" id="ts-export-btn">⬇ Export CSV</button>
+        <button class="btn-ghost" id="ts-refresh-btn">↻ Refresh</button>
+      </div>
+    </div>
+
+    <div class="ts-tabs">
+      <button class="ts-tab active" data-ts-tab="dashboard"><i class="ti ti-layout-dashboard" aria-hidden="true"></i> Dashboard</button>
+      <button class="ts-tab" data-ts-tab="log"><i class="ti ti-list-details" aria-hidden="true"></i> Issue Log</button>
+      <button class="ts-tab" data-ts-tab="reports"><i class="ti ti-mail" aria-hidden="true"></i> Student Reports <span class="ts-badge" id="ts-reports-badge" style="display:none">0</span></button>
+      <button class="ts-tab" data-ts-tab="known"><i class="ti ti-books" aria-hidden="true"></i> Known Issues</button>
+      <button class="ts-tab" data-ts-tab="analytics"><i class="ti ti-chart-line" aria-hidden="true"></i> Analytics</button>
+      <button class="ts-tab" data-ts-tab="library"><i class="ti ti-tools" aria-hidden="true"></i> Quick Fix Library <span class="ts-badge" id="ts-library-badge" style="display:none">0</span></button>
+    </div>
+
+    <div class="ts-how-to-use">
+      <div class="ts-how-to-use-toggle" id="ts-htu-toggle">
+        <span><i class="ti ti-bulb" aria-hidden="true"></i> How to Use Claude Code Prompts</span>
+        <span class="ts-htu-arrow">▾</span>
+      </div>
+      <div class="ts-how-to-use-body" id="ts-htu-body">
+        <div class="ts-how-to-steps">
+          <div class="ts-htu-step"><div class="ts-htu-num">1</div><div class="ts-htu-text">Open <strong>Terminal</strong> on your Mac</div></div>
+          <div class="ts-htu-step"><div class="ts-htu-num">2</div><div class="ts-htu-text">Type <code>cd ~/Desktop/ysc-student-hub</code> and press Enter</div></div>
+          <div class="ts-htu-step"><div class="ts-htu-num">3</div><div class="ts-htu-text">Type <code>claude</code> and press Enter to open Claude Code</div></div>
+          <div class="ts-htu-step"><div class="ts-htu-num">4</div><div class="ts-htu-text">Find the issue below and click <strong>Copy Prompt</strong></div></div>
+          <div class="ts-htu-step"><div class="ts-htu-num">5</div><div class="ts-htu-text">Paste the prompt into Claude Code and press Enter</div></div>
+          <div class="ts-htu-step"><div class="ts-htu-num">6</div><div class="ts-htu-text">Claude Code will investigate and fix the code automatically</div></div>
+          <div class="ts-htu-step"><div class="ts-htu-num">7</div><div class="ts-htu-text">Refresh the student hub in the browser to test the fix</div></div>
+          <div class="ts-htu-step"><div class="ts-htu-num">8</div><div class="ts-htu-text">Return here and mark the issue as <strong>Resolved</strong></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ts-pane" id="ts-pane-dashboard">
+      <div class="ts-summary-row" id="ts-summary-row">
+        <div class="ts-stat-card ts-stat-red">
+          <div class="ts-stat-num" id="ts-total-open">—</div>
+          <div class="ts-stat-label">Open / In-progress Incidents</div>
+        </div>
+        <div class="ts-stat-card ts-stat-orange">
+          <div class="ts-stat-num" id="ts-students-affected">—</div>
+          <div class="ts-stat-label">Students Affected</div>
+        </div>
+        <div class="ts-stat-card ts-stat-blue">
+          <div class="ts-stat-num" id="ts-new-reports">—</div>
+          <div class="ts-stat-label">Student Reports</div>
+        </div>
+        <div class="ts-stat-card ts-stat-green">
+          <div class="ts-stat-num" id="ts-resolved-today">—</div>
+          <div class="ts-stat-label">Resolved Today</div>
+        </div>
+        <div class="ts-stat-card ts-stat-navy">
+          <div class="ts-stat-label" style="font-size:.75rem;opacity:.75">Most Common Today</div>
+          <div class="ts-stat-num" id="ts-top-feature" style="font-size:1rem">—</div>
+        </div>
+      </div>
+
+      <p id="ts-occurrences-note" class="ts-health-note"></p>
+      <div id="ts-integration-signals" class="ts-integration-signals" aria-live="polite"></div>
+      <div id="ts-patterns-area" style="display:none;margin-bottom:16px">
+        <div class="ts-section-head">
+          <h3 class="ts-section-title"><i class="ti ti-search" aria-hidden="true"></i> Patterns to Investigate</h3>
+          <span class="ts-health-note">Last 7 days · evidence, not confirmed diagnoses</span>
+        </div>
+        <div id="ts-patterns-list"></div>
+      </div>
+
+      <div class="ts-section-head">
+        <h3 class="ts-section-title">Live Student Status</h3>
+        <span style="font-size:.78rem;color:var(--sp-muted)">Students currently experiencing issues</span>
+      </div>
+      <div id="ts-student-status" class="ts-student-status-list">
+        <div class="empty-state">Loading…</div>
+      </div>
+
+      <div class="ts-section-head" style="margin-top:24px">
+        <h3 class="ts-section-title">One-Click Fixes</h3>
+        <span style="font-size:.78rem;color:var(--sp-muted)">Select a student then apply a fix</span>
+      </div>
+      <div class="ts-oneclick-area">
+        <div class="ts-oneclick-select-wrap">
+          <label class="ts-field-label">Student</label>
+          <select id="ts-fix-student" class="filter-select" style="min-width:220px">
+            <option value="">— Select student —</option>
+          </select>
+        </div>
+        <div class="ts-fix-btns">
+          <button class="ts-fix-btn" data-action="clear-cache" title="Deletes the student's saved preferences — they will start fresh">🗑 Clear Cache</button>
+          <button class="ts-fix-btn" data-action="reset-layout" title="Resets panel positions to default layout">🔄 Reset Layout</button>
+          <button class="ts-fix-btn" data-action="reset-prefs" title="Clears all personalization settings">♻️ Reset All Prefs</button>
+        </div>
+        <div id="ts-fix-status" class="ts-fix-status" style="display:none"></div>
+      </div>
+      <div id="ts-insights-area" style="display:none;margin-top:24px">
+        <div class="ts-section-head">
+          <h3 class="ts-section-title"><i class="ti ti-chart-bar" aria-hidden="true"></i> Prompt Library Activity</h3>
+          <a href="#" onclick="document.querySelector('.ts-tab[data-ts-tab=library]').click();return false" style="font-size:.78rem;color:var(--sp-blue);font-weight:700;">View Quick Fix Library →</a>
+        </div>
+        <p class="ts-health-note">Copies and content reviews are not successful fixes. Outcomes are administrator-reported and incident-linked.</p>
+        <div id="ts-insights-grid" class="ts-insights-grid"></div>
+      </div>
+    </div>
+
+    <div class="ts-pane" id="ts-pane-log" style="display:none">
+      <div class="ts-filter-bar">
+        <input type="text" class="filter-input" id="ts-log-search" placeholder="Search keyword…" />
+        <input type="text" class="filter-input" id="ts-log-student" placeholder="Filter by student…" />
+        <select class="filter-select" id="ts-log-feature">
+          <option value="all">All features</option>
+          <option value="canvas">Canvas</option><option value="slack">Slack</option>
+          <option value="drive">Google Drive</option><option value="calendar">Calendar</option>
+          <option value="chatbot">Chatbot</option><option value="grades">Grades</option>
+          <option value="zoom">Zoom</option><option value="timer">Timer</option>
+          <option value="auth">Auth</option><option value="general">General</option>
+        </select>
+        <select class="filter-select" id="ts-log-status">
+          <option value="all">All statuses</option>
+          <option value="open">Open</option><option value="in_progress">In Progress</option>
+          <option value="resolved">Resolved</option>
+        </select>
+        <select class="filter-select" id="ts-log-type">
+          <option value="all">All types</option>
+          <option value="api">API Error</option><option value="js">JS Error</option>
+          <option value="auth">Auth</option><option value="slow">Slow Load</option>
+          <option value="network">Network</option>
+        </select>
+        <label class="date-filter-label">From <input type="date" id="ts-log-from" class="date-input"></label>
+        <label class="date-filter-label">To <input type="date" id="ts-log-to" class="date-input"></label>
+        <button class="btn-ghost" id="ts-log-apply">Apply</button>
+      </div>
+      <div id="ts-log-table" class="table-wrap">
+        <div class="empty-state">No issues logged yet.</div>
+      </div>
+    </div>
+
+    <div class="ts-pane" id="ts-pane-reports" style="display:none">
+      <div id="ts-reports-list" class="ts-reports-list">
+        <div class="empty-state">No student reports submitted yet.</div>
+      </div>
+    </div>
+
+    <div class="ts-pane" id="ts-pane-known" style="display:none">
+      <div class="ts-section-head">
+        <h3 class="ts-section-title">Known Issues Inventory</h3>
+        <button class="btn-primary" id="ts-add-known-btn">+ Add New Issue</button>
+      </div>
+
+      <div id="ts-known-form" class="ts-known-form" style="display:none">
+        <div class="ts-known-form-inner">
+          <h4 class="ts-form-title" id="ts-known-form-title">Add New Known Issue</h4>
+          <input type="hidden" id="ts-known-edit-id" />
+          <div class="ts-form-row">
+            <div class="ts-form-field" style="flex:2">
+              <label class="ts-field-label">Issue Title</label>
+              <input type="text" id="ts-ki-title" class="filter-input" placeholder="e.g. Slack channels not loading" style="width:100%" />
+            </div>
+            <div class="ts-form-field">
+              <label class="ts-field-label">Feature</label>
+              <select id="ts-ki-feature" class="filter-select" style="width:100%">
+                <option value="general">General</option><option value="canvas">Canvas</option>
+                <option value="slack">Slack</option><option value="drive">Google Drive</option>
+                <option value="calendar">Calendar</option><option value="chatbot">Chatbot</option>
+                <option value="grades">Grades</option><option value="zoom">Zoom</option>
+                <option value="auth">Auth / Sign-In</option>
+              </select>
+            </div>
+            <div class="ts-form-field">
+              <label class="ts-field-label">Status</label>
+              <select id="ts-ki-status" class="filter-select" style="width:100%">
+                <option value="active">Active</option><option value="resolved">Resolved</option>
+                <option value="monitoring">Monitoring</option>
+              </select>
+            </div>
+          </div>
+          <div class="ts-form-field">
+            <label class="ts-field-label">What does the student experience?</label>
+            <textarea id="ts-ki-experience" class="sg-textarea" style="min-height:60px" placeholder="Describe what the student sees or cannot do..."></textarea>
+          </div>
+          <div class="ts-form-field">
+            <label class="ts-field-label">Technical cause (optional)</label>
+            <textarea id="ts-ki-cause" class="sg-textarea" style="min-height:60px" placeholder="Root cause for reference..."></textarea>
+          </div>
+          <div class="ts-form-field">
+            <label class="ts-field-label">Fix steps (one per line)</label>
+            <textarea id="ts-ki-steps" class="sg-textarea" style="min-height:80px" placeholder="Step 1&#10;Step 2&#10;Step 3"></textarea>
+          </div>
+          <div class="ts-form-field">
+            <label class="ts-field-label">Claude Code prompt (optional)</label>
+            <textarea id="ts-ki-prompt" class="sg-textarea" style="min-height:60px;font-family:monospace;font-size:.8rem" placeholder="Paste a Claude Code prompt that fixes this issue..."></textarea>
+          </div>
+          <div class="ts-form-field">
+            <label class="ts-field-label">Notes</label>
+            <input type="text" id="ts-ki-notes" class="filter-input" placeholder="Any additional notes..." style="width:100%" />
+          </div>
+          <div class="ts-form-footer">
+            <button class="btn-ghost" id="ts-known-form-cancel">Cancel</button>
+            <button class="btn-primary" id="ts-known-form-save">Save Issue</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="ts-known-filters">
+        <input type="text" class="filter-input" id="ts-known-search" placeholder="Search known issues…" />
+        <select class="filter-select" id="ts-known-status-filter">
+          <option value="all">All statuses</option><option value="active">Active</option>
+          <option value="resolved">Resolved</option><option value="monitoring">Monitoring</option>
+        </select>
+        <select class="filter-select" id="ts-known-feature-filter">
+          <option value="all">All features</option><option value="canvas">Canvas</option>
+          <option value="slack">Slack</option><option value="drive">Drive</option>
+          <option value="calendar">Calendar</option><option value="auth">Auth</option>
+          <option value="general">General</option>
+        </select>
+      </div>
+      <div id="ts-known-list" class="ts-known-list">
+        <div class="empty-state">Loading…</div>
+      </div>
+    </div>
+
+    <div class="ts-pane" id="ts-pane-library" style="display:none">
+      <div class="ll-toolbar">
+        <input type="text" class="filter-input" id="ll-search" placeholder="🔍 Search prompts…" style="min-width:200px">
+        <select class="filter-select" id="ll-category-filter">
+          <option value="all">All categories</option>
+          <option value="canvas">Canvas</option><option value="slack">Slack</option>
+          <option value="drive">Google Drive</option><option value="chatbot">Chatbot</option>
+          <option value="timer">Timer</option><option value="layout">Layout &amp; Toggles</option>
+          <option value="auth">Authentication</option><option value="performance">Performance</option>
+          <option value="general">General Maintenance</option>
+        </select>
+        <select class="filter-select" id="ll-status-filter">
+          <option value="all">All statuses</option>
+          <option value="verified">✓ Verified</option>
+          <option value="auto-generated">Auto-generated</option>
+          <option value="draft">Draft</option>
+        </select>
+        <select class="filter-select" id="ll-sort">
+          <option value="recent">Most recent</option>
+          <option value="success">Highest reported outcome rate</option>
+          <option value="used">Most recorded copies</option>
+        </select>
+        <button class="btn-primary" id="ll-add-btn" style="white-space:nowrap">+ Add Prompt</button>
+        <button class="btn-ghost" id="ll-export-btn" style="white-space:nowrap">⬇ Export JSON</button>
+      </div>
+      <div id="ts-library-content">
+        <div class="empty-state">Loading…</div>
+      </div>
+    </div>
+
+    <div class="ts-pane" id="ts-pane-analytics" style="display:none">
+      <div class="ts-analytics-grid">
+        <div class="ts-analytics-card">
+          <h4 class="ts-analytics-title">Issues by Feature (This Week)</h4>
+          <div id="ts-chart-feature" class="ts-bar-chart"></div>
+        </div>
+        <div class="ts-analytics-card">
+          <h4 class="ts-analytics-title">Issues by Day (Last 7 Days)</h4>
+          <div id="ts-chart-day" class="ts-bar-chart"></div>
+        </div>
+        <div class="ts-analytics-card">
+          <h4 class="ts-analytics-title">Most Affected Students</h4>
+          <div id="ts-chart-students" class="ts-bar-chart"></div>
+        </div>
+        <div class="ts-analytics-card">
+          <h4 class="ts-analytics-title">Issue Type Breakdown</h4>
+          <div id="ts-chart-types" class="ts-bar-chart"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Save This Fix modal -->
+  <div id="save-fix-modal" class="prompt-modal" style="display:none">
+    <div class="prompt-modal-inner" style="max-width:580px">
+      <button class="prompt-modal-close" id="save-fix-close">✕ Close</button>
+      <h3 style="color:var(--sp-ink);font-family:var(--sp-font-display);font-weight:800;margin-bottom:16px">Save Fix to Quick Fix Library</h3>
+      <div class="ts-form-field">
+        <label class="ts-field-label">Issue Title *</label>
+        <input type="text" id="sf-title" class="filter-input" style="width:100%" placeholder="e.g. Canvas not loading after token refresh" />
+      </div>
+      <div class="ts-form-row">
+        <div class="ts-form-field" style="flex:1">
+          <label class="ts-field-label">Category</label>
+          <select id="sf-category" class="filter-select" style="width:100%">
+            <option value="canvas">Canvas</option><option value="slack">Slack</option>
+            <option value="drive">Google Drive</option><option value="chatbot">Chatbot</option>
+            <option value="timer">Timer</option><option value="layout">Layout &amp; Toggles</option>
+            <option value="auth">Authentication</option><option value="performance">Performance</option>
+            <option value="general" selected>General Maintenance</option>
+          </select>
+        </div>
+        <div class="ts-form-field" style="flex:1">
+          <label class="ts-field-label">Legacy note (not a measured outcome)</label>
+          <select id="sf-rating" class="filter-select" style="width:100%">
+            <option value="">No result recorded</option>
+            <option value="worked-perfectly">✅ Worked perfectly</option>
+            <option value="worked-with-modifications">⚠️ Worked with modifications</option>
+            <option value="partial">🟡 Partial fix only</option>
+          </select>
+        </div>
+      </div>
+      <div class="ts-form-field">
+        <label class="ts-field-label">Claude Code Prompt Used</label>
+        <textarea id="sf-prompt" class="sg-textarea" style="min-height:120px;font-family:monospace;font-size:.78rem" placeholder="Paste the Claude Code prompt that fixed this issue…"></textarea>
+      </div>
+      <div class="ts-form-field">
+        <label class="ts-field-label">Brief Description</label>
+        <input type="text" id="sf-desc" class="filter-input" style="width:100%" placeholder="One-line description…" />
+      </div>
+      <div class="ts-form-field">
+        <label class="ts-field-label">Notes</label>
+        <textarea id="sf-notes" class="sg-textarea" style="min-height:50px" placeholder="Any additional context…"></textarea>
+      </div>
+      <input type="hidden" id="sf-source-error-id" />
+      <input type="hidden" id="sf-editing-id" />
+      <div class="ts-form-footer">
+        <button class="btn-ghost" id="save-fix-cancel">Cancel</button>
+        <button class="btn-primary" id="save-fix-submit">💾 Save to Library</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="ts-detail-modal" class="prompt-modal" style="display:none">
+    <div class="prompt-modal-inner" style="max-width:600px">
+      <button class="prompt-modal-close" id="ts-modal-close">✕ Close</button>
+      <div id="ts-detail-content"></div>
+    </div>
+  </div>
+
+    <!-- SAFEGUARDS (admin only) -->
+    <section class="panel" id="panel-safeguards">
+      <div class="panel-head">
+        <div>
+          <div class="panel-eyebrow">// Safeguards</div>
+          <h1 class="panel-title">Student Safety Controls</h1>
+          <p class="panel-desc">Global settings — apply instantly to all students</p>
+        </div>
+        <button class="btn-primary" id="save-safeguards-btn" onclick="saveSafeguards()">Save Changes</button>
+      </div>
+      <div class="safeguard-panel" id="safeguard-panel" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px;padding:20px 0;">
+
+        <div class="sg-card ts-card" style="margin-bottom:0;">
+          <h3 class="ts-card-title">Access Controls</h3>
+          <label class="toggle-row" style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;cursor:pointer;">
+            <div style="flex:1"><strong style="font-size:.9rem;">Hub Lock Mode</strong><div style="font-size:.8rem;color:var(--sp-muted);">Students can only view Canvas assignments</div></div>
+            <input type="checkbox" id="sg-locked" style="margin-top:3px;accent-color:var(--sp-ink);width:18px;height:18px;">
+          </label>
+          <label class="toggle-row" style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;cursor:pointer;">
+            <div style="flex:1"><strong style="font-size:.9rem;">YouTube Search</strong><div style="font-size:.8rem;color:var(--sp-muted);">Allow students to search YouTube from chatbot</div></div>
+            <input type="checkbox" id="sg-youtube" checked style="margin-top:3px;accent-color:var(--sp-ink);width:18px;height:18px;">
+          </label>
+          <label class="toggle-row" style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;cursor:pointer;">
+            <div style="flex:1"><strong style="font-size:.9rem;">Restrict to School Subjects</strong><div style="font-size:.8rem;color:var(--sp-muted);">Chatbot only answers academic questions</div></div>
+            <input type="checkbox" id="sg-school-only" style="margin-top:3px;accent-color:var(--sp-ink);width:18px;height:18px;">
+          </label>
+          <label class="toggle-row" style="display:flex;align-items:flex-start;gap:12px;cursor:pointer;">
+            <div style="flex:1"><strong style="font-size:.9rem;">Academic Integrity Filter</strong><div style="font-size:.8rem;color:var(--sp-muted);">Prevent chatbot from completing assignments for students</div></div>
+            <input type="checkbox" id="sg-integrity" checked style="margin-top:3px;accent-color:var(--sp-ink);width:18px;height:18px;">
+          </label>
+        </div>
+
+        <div class="sg-card ts-card" style="margin-bottom:0;">
+          <h3 class="ts-card-title">Blocked Keywords</h3>
+          <p style="font-size:.82rem;color:var(--sp-muted);margin:0 0 10px;">Chatbot won't respond to messages containing these words (one per line)</p>
+          <textarea id="sg-keywords" class="sg-textarea" style="min-height:90px;font-size:13px;" placeholder="drugs&#10;cheating&#10;test answers"></textarea>
+        </div>
+
+        <div class="sg-card ts-card" style="margin-bottom:0;">
+          <h3 class="ts-card-title">Blocked Websites (Global)</h3>
+          <p style="font-size:.82rem;color:var(--sp-muted);margin:0 0 10px;">Students will be warned when visiting these domains (one per line)</p>
+          <textarea id="sg-domains" class="sg-textarea" style="min-height:90px;font-size:13px;" placeholder="reddit.com&#10;tiktok.com&#10;discord.com"></textarea>
+        </div>
+
+        <div class="sg-card ts-card" style="margin-bottom:0;">
+          <h3 class="ts-card-title">Feature Time Limits</h3>
+          <p style="font-size:.82rem;color:var(--sp-muted);margin:0 0 10px;">Max minutes per session (0 = no limit)</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <label style="font-size:.85rem;">Canvas <input type="number" class="time-input filter-input" data-feature="canvas" min="0" placeholder="0" style="width:100%;margin-top:2px;min-height:36px;padding:6px 10px;font-size:13px;"></label>
+            <label style="font-size:.85rem;">Slack <input type="number" class="time-input filter-input" data-feature="slack" min="0" placeholder="0" style="width:100%;margin-top:2px;min-height:36px;padding:6px 10px;font-size:13px;"></label>
+            <label style="font-size:.85rem;">Drive <input type="number" class="time-input filter-input" data-feature="drive" min="0" placeholder="0" style="width:100%;margin-top:2px;min-height:36px;padding:6px 10px;font-size:13px;"></label>
+            <label style="font-size:.85rem;">Chat <input type="number" class="time-input filter-input" data-feature="chat" min="0" placeholder="0" style="width:100%;margin-top:2px;min-height:36px;padding:6px 10px;font-size:13px;"></label>
+          </div>
+        </div>
+
+      </div>
+      <div id="save-safeguards-status" style="margin-top:10px;font-family:var(--sp-font-label);font-size:13px;color:var(--sp-ink);"></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Add Teacher Modal -->
+<div class="modal-overlay" id="add-teacher-modal" style="display:none">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modal-title">Add Teacher</h2>
+      <button class="modal-close" onclick="closeAddTeacher()">✕</button>
+    </div>
+    <div id="modal-error" class="modal-error" style="display:none"></div>
+    <form id="add-teacher-form">
+      <input type="hidden" id="edit-teacher-id" />
+      <div class="form-row">
+        <div class="form-group">
+          <label>Full Name *</label>
+          <input type="text" id="tf-name" placeholder="Jane Smith" required />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="tf-email" placeholder="jane@example.edu" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Username *</label>
+          <input type="text" id="tf-username" placeholder="jsmith" required />
+        </div>
+        <div class="form-group">
+          <label>Temporary Password *</label>
+          <input type="text" id="tf-password" placeholder="Auto-generated or custom" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Slack Handle</label>
+          <input type="text" id="tf-slack" placeholder="@jsmith" />
+        </div>
+        <div class="form-group">
+          <label>Accent Color</label>
+          <input type="color" id="tf-color" value="#14141A" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Classes (one per line: "Class Name | Canvas Course ID")</label>
+        <textarea id="tf-classes" rows="3"
+          placeholder="Period 1 | 12345&#10;AP Computer Science | 67890"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeAddTeacher()">Cancel</button>
+        <button type="submit" class="btn-primary" id="modal-save-btn">Add Teacher</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Import Roster Modal -->
+<div class="modal-overlay" id="import-roster-modal" style="display:none">
+  <div class="modal" style="max-width:760px">
+    <div class="modal-head">
+      <h2>Import Roster</h2>
+      <button class="modal-close" onclick="closeImportRoster()">✕</button>
+    </div>
+    <div id="import-roster-error" class="modal-error" style="display:none"></div>
+
+    <div id="import-roster-paste-step">
+      <p style="font-size:.85rem;color:var(--sp-muted);margin-bottom:10px">
+        Paste rows copied directly from the roster spreadsheet — <strong>First Name, Last Name, YSC Email, Grade</strong>,
+        in that order. Any other columns (e.g. parent email) are ignored and never imported. Rows with no YSC Email yet
+        are skipped, not blocked — you can re-paste once emails are assigned.
+      </p>
+      <div class="form-group">
+        <textarea id="import-roster-textarea" rows="10" style="width:100%;font-family:monospace;font-size:.85rem"
+          placeholder="Jane&#9;Doe&#9;jdoe@example.edu&#9;9&#10;John&#9;Smith&#9;&#9;7"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeImportRoster()">Cancel</button>
+        <button type="button" class="btn-primary" id="import-roster-preview-btn" onclick="previewImportRoster()">Preview</button>
+      </div>
+    </div>
+
+    <div id="import-roster-preview-step" style="display:none">
+      <div id="import-roster-summary" style="font-size:.85rem;color:var(--sp-ink);margin-bottom:10px"></div>
+      <div id="import-roster-table" class="table-wrap" style="max-height:340px;overflow:auto"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="backToImportPaste()">Back</button>
+        <button type="button" class="btn-primary" id="import-roster-commit-btn" onclick="commitImportRoster()">Confirm Import</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Import Mentor Assignments Modal -->
+<div class="modal-overlay" id="import-mentors-modal" style="display:none">
+  <div class="modal" style="max-width:760px">
+    <div class="modal-head">
+      <h2>Import Mentor Assignments</h2>
+      <button class="modal-close" onclick="closeImportMentorAssignments()">✕</button>
+    </div>
+    <div id="import-mentors-error" class="modal-error" style="display:none"></div>
+
+    <div id="import-mentors-paste-step">
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button type="button" class="btn-secondary" id="import-mentors-mode-email" onclick="setImportMentorsMode('email')">Email pairs</button>
+        <button type="button" class="btn-secondary" id="import-mentors-mode-name" onclick="setImportMentorsMode('name')">Indented name tree</button>
+      </div>
+      <p id="import-mentors-instructions-email" style="font-size:.85rem;color:var(--sp-muted);margin-bottom:10px">
+        Paste rows — <strong>Student YSC Email, Mentor</strong> — in that order. Mentor can be a teacher's
+        full name or email; it must match a teacher account exactly (no partial/fuzzy matching — an
+        ambiguous or unmatched name is reported as an error, not guessed). The student must already be
+        in the registry (import the roster first if needed). An existing assignment is shown as a
+        change from the current mentor, not silently replaced.
+      </p>
+      <p id="import-mentors-instructions-name" style="font-size:.85rem;color:var(--sp-muted);margin-bottom:10px;display:none">
+        Paste an indented list: an <strong>unindented line is a mentor's full name</strong>; any
+        <strong>indented line under it (any depth, tabs or spaces) is one of their students</strong>,
+        also by full name. Both mentor and student names must match exactly one account/registry
+        record — an unmatched or ambiguous name (e.g. two students sharing a name) is reported as an
+        error, never guessed; a name-collision error lists every matching student's email so you can
+        assign that one manually via the form above.
+      </p>
+      <div class="form-group">
+        <textarea id="import-mentors-textarea" rows="10" style="width:100%;font-family:monospace;font-size:.85rem"
+          placeholder="mia.castellanos@example.edu&#9;Elena Reyes&#10;noah.kim@example.edu&#9;marcus.webb@example.edu"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeImportMentorAssignments()">Cancel</button>
+        <button type="button" class="btn-primary" id="import-mentors-preview-btn" onclick="previewImportMentorAssignments()">Preview</button>
+      </div>
+    </div>
+
+    <div id="import-mentors-preview-step" style="display:none">
+      <div id="import-mentors-summary" style="font-size:.85rem;color:var(--sp-ink);margin-bottom:10px"></div>
+      <div id="import-mentors-table" class="table-wrap" style="max-height:340px;overflow:auto"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="backToImportMentorsPaste()">Back</button>
+        <button type="button" class="btn-primary" id="import-mentors-commit-btn" onclick="commitImportMentorAssignments()">Confirm Import</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div class="modal-overlay" id="reset-modal" style="display:none">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-head">
+      <h2>Reset Password</h2>
+      <button class="modal-close" onclick="document.getElementById('reset-modal').style.display='none'">✕</button>
+    </div>
+    <p style="margin-bottom:16px;color:var(--sp-ink)">Enter a new password for <strong id="reset-teacher-name"></strong>, or leave blank to generate a random temporary password (teacher must change it on next login).</p>
+    <div class="form-group" style="margin-bottom:12px">
+      <label style="font-size:.85rem;font-weight:700;color:var(--sp-ink)">New Password</label>
+      <input type="text" id="reset-password-input" placeholder="Leave blank for random temp password"
+        style="width:100%;padding:11px 14px;min-height:44px;border:2px solid var(--sp-ink);border-radius:var(--sp-input-radius);font-size:.9rem;margin-top:4px;box-sizing:border-box;font-family:var(--sp-font-body);" />
+    </div>
+    <div id="reset-modal-error" style="display:none;color:#dc2626;font-size:.85rem;margin-bottom:8px"></div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="document.getElementById('reset-modal').style.display='none'">Cancel</button>
+      <button class="btn-danger" id="confirm-reset-btn">Reset Password</button>
+    </div>
+  </div>
+</div>
+
+
+<script src="../admin/admin.js"></script>
+<script src="../preview-bar.js" data-role="admin" data-prefix="../"></script>
+</body>
+</html>

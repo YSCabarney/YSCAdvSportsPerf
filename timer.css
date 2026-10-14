@@ -1,0 +1,504 @@
+html { font-size: 112%; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   YSC Academy — Timer Widget Styles
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Floating panel ──────────────────────────────────────────────────────── */
+#timer-float-panel {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 360px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--sp-tint);
+  border: 1px solid #D5D1C8;
+  border-radius: 6px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.18);
+  z-index: 9998;
+  flex-direction: column;
+  display: none;
+}
+
+.timer-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid #333333;
+  background: var(--sp-ink);
+  border-radius: 6px 6px 0 0;
+  color: var(--sp-paper);
+}
+.timer-panel-title {
+  font-weight: 700;
+  font-size: .95rem;
+  flex: 1;
+}
+#timer-panel-close {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,.7);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 5px;
+}
+#timer-panel-close:hover { color: var(--sp-paper); background: rgba(255,255,255,.15); }
+
+/* ── Mode tabs ────────────────────────────────────────────────────────────── */
+.timer-mode-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 10px 12px 6px;
+  border-bottom: 1px solid var(--border, #D5D1C8);
+}
+.timer-mode-btn {
+  flex: 1;
+  padding: 6px 4px;
+  border: 1px solid var(--border, #D5D1C8);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-secondary, #BBBBBB);
+  font-size: .78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+}
+.timer-mode-btn:hover  { background: var(--bg, #F5F3EE); }
+.timer-mode-btn.active {
+  background: var(--sp-ink);
+  color: var(--sp-paper);
+  border-color: var(--sp-ink);
+}
+
+/* ── Panel body ────────────────────────────────────────────────────────────── */
+#timer-panel-body { padding: 14px; }
+
+/* ── Countdown ────────────────────────────────────────────────────────────── */
+.tcd {
+  display: grid;
+  grid-template-rows: auto auto auto auto auto auto auto;
+  gap: 16px;
+  min-width: 300px;
+}
+
+.tcd-label {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1.5px solid var(--border, #D5D1C8);
+  border-radius: 8px;
+  font-size: var(--fs-xs);
+  background: var(--bg, #F5F3EE);
+  color: var(--text, #111111);
+  text-align: center;
+  font-family: var(--font-body);
+  box-sizing: border-box;
+}
+.tcd-label:focus { outline: none; border-color: var(--sp-ink); }
+
+/* Pomodoro mode row (full-width with dividers) */
+.tcd-pomo-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tcd-divider {
+  flex: 1;
+  height: 1px;
+  background: var(--border, #D5D1C8);
+}
+.tpreset-pomo {
+  flex-shrink: 0;
+  padding: 7px 16px;
+  background: var(--sp-ink);
+  border: 1.5px solid var(--sp-ink);
+  border-radius: 4px;
+  color: var(--sp-paper);
+  font-size: var(--fs-sm);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.tpreset-pomo:hover { opacity: .88; }
+
+/* Large digital time display */
+.tcd-time-display {
+  font-family: var(--sp-font-label);
+  font-size: 56px;
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: 4px;
+  line-height: 1;
+  color: var(--sp-ink);
+  transition: color 0.5s ease;
+  padding: 8px 0;
+  user-select: none;
+  font-variant-numeric: tabular-nums;   /* every digit the same width — the time doesn't shift as it counts */
+}
+
+@keyframes tpulse {
+  0%,100% { opacity: 1; }
+  50%      { opacity: .55; }
+}
+/* No opacity pulse on the big digits (2026-10-11): fading the element while its text changes every second left a
+   "ghost" of the previous number blended over the new one in Chrome — reported as a very blurry timer. */
+.tcd-time-display.tpulse { animation: none; }
+
+/* Horizontal progress bar */
+.tcd-bar-wrap {
+  width: 100%;
+  height: 4px;
+  background: var(--sp-tint);
+  border-radius: 0;
+  overflow: hidden;
+}
+.tcd-bar {
+  height: 100%;
+  border-radius: 0;
+  background: var(--sp-blue);
+  transition: width 0.9s linear, background 0.5s ease;
+}
+
+/* Preset buttons — single row, no wrapping */
+.tcd-presets {
+  display: flex;
+  gap: 6px;
+  justify-content: space-between;
+}
+.tpreset {
+  flex: 1;
+  padding: 7px 4px;
+  border: 1.5px solid var(--border, #D5D1C8);
+  border-radius: 8px;
+  background: var(--bg, #F5F3EE);
+  cursor: pointer;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  font-family: var(--font-body);
+  color: var(--text, #111111);
+  text-align: center;
+  transition: all .12s;
+  white-space: nowrap;
+}
+.tpreset:hover { background: var(--sp-ink); color: var(--sp-paper); border-color: var(--sp-ink); }
+
+/* ── Time inputs ──────────────────────────────────────────────────────────── */
+.tcd-inputs {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.tcd-inputs label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: .72rem;
+  color: var(--text-secondary, #BBBBBB);
+  gap: 3px;
+}
+.tcd-inputs input {
+  width: 56px;
+  padding: 5px 4px;
+  border: 1px solid var(--border, #D5D1C8);
+  border-radius: 7px;
+  text-align: center;
+  font-size: .9rem;
+  font-weight: 600;
+  background: var(--bg, #F5F3EE);
+  color: var(--text, #111111);
+}
+
+/* ── Controls ─────────────────────────────────────────────────────────────── */
+.tctrl {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  justify-content: center;
+}
+.tctrl-btn {
+  padding: 9px 18px;
+  border: none;
+  border-radius: 9px;
+  font-size: .85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s;
+}
+.tctrl-btn:hover { transform: translateY(-1px); }
+.tctrl-btn:active { transform: none; }
+.tmain  { background: var(--sp-ink); color: var(--sp-paper); flex: 1; }
+.tmain:hover  { opacity: .88; }
+.treset { background: var(--bg, var(--sp-paper)); color: var(--text, var(--sp-ink)); border: 2px solid var(--sp-ink); }
+.treset:hover { background: var(--sp-tint); }
+.tlap   { background: var(--sp-ink); color: var(--sp-paper); }
+.tlap:hover { opacity: .88; }
+.tlap:disabled { background: var(--sp-tint); color: var(--sp-muted); cursor: default; transform: none; }
+
+/* ── Pomodoro bar ─────────────────────────────────────────────────────────── */
+.tpomo-bar {
+  width: 100%;
+  background: var(--sp-paper);
+  border: 1px solid #D5D1C8;
+  border-radius: 4px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+.tpomo-dots { display: flex; gap: 8px; }
+.tpomo-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--sp-tint);
+  transition: background .3s;
+}
+.tpomo-dot.done { background: var(--sp-yellow); }
+.tpomo-info  { font-size: .8rem; font-weight: 700; color: var(--sp-ink); }
+.tpomo-streak { font-size: .75rem; color: var(--sp-muted); }
+
+/* ── Stopwatch ────────────────────────────────────────────────────────────── */
+.tsw { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+
+.tsw-display {
+  font-family: var(--sp-font-label);
+  font-size: 2.6rem;
+  font-weight: 700;
+  color: var(--text, #111111);
+  letter-spacing: 2px;
+  background: var(--bg, #F5F3EE);
+  border-radius: 12px;
+  padding: 18px 24px;
+  width: 100%;
+  text-align: center;
+  border: 2px solid var(--border, #D5D1C8);
+  font-variant-numeric: tabular-nums;
+}
+.tsw-display.tring-pulse { border-color: var(--sp-ink); animation: tpulse 2s ease-in-out infinite; }
+.tsw-display.tpulse       { border-color: var(--sp-ink); animation: none; }   /* no opacity pulse while digits change (ghosting) */
+
+.tsw-laps { width: 100%; max-height: 200px; overflow-y: auto; }
+.tsw-laps-empty { text-align: center; color: var(--text-secondary, #AAAAAA); font-size: .82rem; padding: 12px; }
+.tsw-laps-head  {
+  display: grid;
+  grid-template-columns: 60px 1fr 1fr;
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--text-secondary, #BBBBBB);
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--border, #D5D1C8);
+  text-transform: uppercase;
+}
+.tsw-lap-row {
+  display: grid;
+  grid-template-columns: 60px 1fr 1fr;
+  padding: 5px 6px;
+  font-size: .82rem;
+  border-bottom: 1px solid var(--border, #D5D1C8);
+}
+.tsw-lap-n     { color: var(--text-secondary, #BBBBBB); font-weight: 600; }
+.tsw-lap-split { font-family: var(--sp-font-label); font-weight: 600; }
+.tsw-lap-total { font-family: var(--sp-font-label); color: var(--text-secondary, #BBBBBB); }
+
+/* ── Alarm panel ─────────────────────────────────────────────────────────── */
+.talarm { display: flex; flex-direction: column; gap: 14px; }
+
+.talarm-form {
+  background: var(--bg, #F5F3EE);
+  border: 1px solid var(--border, #D5D1C8);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.talarm-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.tal-time {
+  padding: 7px 10px;
+  border: 1px solid var(--border, #D5D1C8);
+  border-radius: 8px;
+  font-size: .9rem;
+  font-weight: 700;
+  background: var(--card-bg, #fff);
+  color: var(--text, #111111);
+  flex-shrink: 0;
+}
+.tal-label {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid var(--border, #D5D1C8);
+  border-radius: 8px;
+  font-size: .82rem;
+  background: var(--card-bg, #fff);
+  color: var(--text, #111111);
+  min-width: 0;
+}
+.tal-label:focus, .tal-time:focus { outline: none; border-color: var(--sp-ink); }
+
+.tal-days { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; }
+.tal-day-chip {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 7px;
+  border: 1px solid var(--border, #D5D1C8);
+  border-radius: 20px;
+  font-size: .72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .12s;
+  background: var(--card-bg, #fff);
+  color: var(--text, #111111);
+  user-select: none;
+}
+.tal-day-chip input { display: none; }
+.tal-day-chip:has(input:checked) { background: var(--sp-yellow); color: var(--sp-ink); border-color: var(--sp-ink); }
+.tal-day-chip:hover { background: var(--bg, #F5F3EE); }
+.tal-day-chip:has(input:checked):hover { opacity: .9; }
+
+.tal-sound {
+  padding: 7px 8px;
+  border: 1px solid var(--border, #D5D1C8);
+  border-radius: 8px;
+  font-size: .8rem;
+  background: var(--card-bg, #fff);
+  color: var(--text, #111111);
+}
+.tal-add-btn { width: 100%; }
+
+.tal-list { display: flex; flex-direction: column; gap: 8px; }
+.tal-empty { text-align: center; color: var(--text-secondary, #AAAAAA); font-size: .85rem; padding: 16px 0; }
+
+.tal-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--bg, #F5F3EE);
+  border: 1px solid var(--border, #D5D1C8);
+  border-radius: 12px;
+}
+.tal-item-left  { flex: 1; min-width: 0; }
+.tal-item-time  { font-family: var(--sp-font-label); font-size: 1.3rem; font-weight: 700; color: var(--text, #111111); }
+.tal-item-meta  { font-size: .75rem; color: var(--text-secondary, #BBBBBB); margin-top: 2px; }
+.tal-item-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* Toggle switch */
+.tal-toggle { display: flex; align-items: center; cursor: pointer; }
+.tal-toggle-input { display: none; }
+.tal-toggle-track {
+  width: 38px; height: 22px;
+  background: var(--sp-muted);
+  border-radius: 11px;
+  position: relative;
+  transition: background .2s;
+}
+.tal-toggle-thumb {
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 16px; height: 16px;
+  background: var(--sp-paper);
+  border-radius: 50%;
+  transition: transform .2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+.tal-toggle-input:checked + .tal-toggle-track { background: var(--sp-blue); }
+.tal-toggle-input:checked + .tal-toggle-track .tal-toggle-thumb { transform: translateX(16px); }
+
+.tal-del {
+  background: none;
+  border: none;
+  color: var(--text-secondary, #AAAAAA);
+  cursor: pointer;
+  font-size: .9rem;
+  padding: 4px 6px;
+  border-radius: 5px;
+}
+.tal-del:hover { background: #fee2e2; color: #ef4444; }
+
+/* ── Timer fire popup ─────────────────────────────────────────────────────── */
+.timer-fire-popup {
+  position: fixed;
+  inset: 0;
+  z-index: 10002;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,.45);
+  backdrop-filter: blur(4px);
+  animation: tfade-in .3s ease;
+}
+@keyframes tfade-in { from { opacity: 0; } to { opacity: 1; } }
+
+.timer-fire-card {
+  background: var(--card-bg, #fff);
+  border-radius: 20px;
+  padding: 30px 28px 24px;
+  max-width: 340px;
+  width: 92vw;
+  text-align: center;
+  box-shadow: 0 30px 80px rgba(0,0,0,.4), 0 0 0 3px rgba(17,17,17,.12);
+  animation: tpop-in .4s cubic-bezier(.22,1,.36,1);
+}
+@keyframes tpop-in {
+  from { transform: scale(.8) translateY(30px); opacity: 0; }
+  to   { transform: scale(1) translateY(0);     opacity: 1; }
+}
+.timer-fire-icon  { font-size: 3rem; margin-bottom: 10px; animation: tpulse 1s ease 3; }
+.timer-fire-title { font-size: 1.15rem; font-weight: 700; color: var(--text, #111111); margin-bottom: 8px; }
+.timer-fire-msg   { font-size: .88rem; color: var(--text-secondary, #BBBBBB); line-height: 1.5; margin-bottom: 18px; }
+.timer-fire-btns  { display: flex; gap: 10px; justify-content: center; }
+.tfire-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  font-size: .88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s;
+}
+.tfire-ok    { background: var(--sp-ink); color: var(--sp-paper); }
+.tfire-ok:hover { opacity: .88; }
+.tfire-snooze { background: var(--bg, #F5F3EE); color: var(--text, #111111); border: 1px solid var(--border, #D5D1C8); }
+.tfire-snooze:hover { background: var(--border, #D5D1C8); }
+
+/* Post-Focus-Mode reflection (see onCDDone()/showFirePopup() in timer.js) —
+   turns the completion popup into a coaching-loop prompt instead of a
+   dead-end celebration. #1B7A43 not the --success token (#27ae60): white
+   text on raw --success is 2.9:1 on white, fails AA; this shade holds
+   5.4:1 at the popup's 14px bold button size. */
+.timer-fire-reflect {
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--text-secondary, #888);
+  margin-bottom: 10px;
+}
+.tfire-reflect-done  { background: #1B7A43; color: var(--sp-paper); }
+.tfire-reflect-done:hover  { background: #155A31; }
+.tfire-reflect-stuck { background: var(--sp-blue); color: var(--sp-paper); }
+.tfire-reflect-stuck:hover { opacity: .88; }
+
+/* ── Nav header button ────────────────────────────────────────────────────── */
+.timer-header-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  min-height: 34px;
+  background: var(--sp-paper);
+  border: 2px solid var(--sp-ink);
+  border-radius: 100px;
+  color: var(--sp-ink);
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+}
+.timer-header-btn:hover { background: var(--sp-tint); }
+
